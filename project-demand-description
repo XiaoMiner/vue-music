@@ -1,0 +1,308 @@
+# 表单验证
+  > 使用vee-validate配合vue进行表单验证。
+
+ + npm install vee-validate@2.0.0-rc.25 --save
+   > question: 要使用2.0.0版本, 不然无法使用Validator模块中addLocale()方法。
+   > 把npm版本降为了 npm install npm@4.6.0 -g
+  + import VeeValidate, {Validator} from 'vee-validate'
+    import CN from 'vee-validate/dist/locale/zh_CN'
+    Validator.addLocale(CN) // 文件
+    const config = {
+      errorBagName: 'errors', // change if property conflicts.
+      fieldsBagName: 'fields',
+      delay: 0,
+      locale: 'zh_CN',
+      strict: true,
+      enableAutoClasses: false,
+      classNames: {
+        touched: 'touched', // the control has been blurred
+        untouched: 'untouched', // the control hasn't been blurred
+        valid: 'valid', // model is valid
+        invalid: 'invalid', // model is invalid
+        pristine: 'pristine', // control has not been interacted with
+        dirty: 'dirty' // control has been interacted with
+      },
+      events: 'blur',
+      inject: true
+    };
+    Validate.use(VeeValidate,config);
+
+   + 自定义错误提示信息
+      + const dictionary = {
+         zh_CN: {
+           messages: {
+             email: () => '邮箱格式不正确呦'
+           }
+         }
+       }
+
+      Validator.updateDictionary(dictionary)
+
+      + const dictionary = {
+          zh_CN: {
+            messages: {
+              required: (filed) => '请输入您的'+filed
+            },
+            attribute: {
+              email: '邮箱',
+              qq: 'qq账号'
+            }
+          },
+      }
+      Validator.updateDictionary(dictionary)
+
+   + 自定义校验规则
+      Validator.extend('qq', {
+        messages: {
+          zh_CN: filed => '请输入有效的qq号码'
+        },
+        validate: value =>{
+          return /^[1-9][0-9]{4,8}$/.test(value)
+        }
+      })
+
+# sass编译
+  + 使用sass作为样式的预编译工具。
+    npm install node-sass sass-loader --save-dev
+
+# vue轮播图
+  + npm install vue-awesome-swiper --save
+  + 1> 引入到index.html全局使用 (解决) 2> 引入到swiper组件的script中(解决)  3>引入到swiper组件的style中不可以(原因未解决)
+  + swiper 版本 4.0 书写形式。
+   /* pagination: {
+                el: '.swiper-pagination',
+                clickable: true
+              },
+              navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev'
+              }
+   */
+   + 通过控制swiper.css中的.swiper-pagination-bullet选择器控制每个分页器的样式,
+     通过控制.swiper-pagination-bullet-active选择器来控制选中分页器的样式。
+     通过控制.swiper-pagination-clickable .swiper-pagination-bullet选择器控制鼠标放到分页器上时的鼠标类型。
+
+   > 问题: 点击了前进和后退的按钮以后自动添加轮廓
+     + 添加outline-style: none;样式。
+
+   + vue-awesome-swiper嵌套
+     [`<div>
+     <swiper :options="swiperOption" ref="mySwiper">
+          <swiper-slide>
+            <swiper :options="swiperOptionWrap" ref="mySwiperWrap">
+              <swiper-slide>
+              </swiper-slide>
+            </swiper>
+          </swiper-slide>
+          <div class="swiper-scrollbar" style="top: 3px;height: 4px;"></div>
+          <div class="swiper-pagination-wrap"  slot="pagination"></div>
+          <div class="swiper-button-prev-wrap" slot="button-prev"></div>
+          <div class="swiper-button-next-wrap" slot="button-next"></div>
+       </swiper>
+       <div class="swiper-pagination"  slot="pagination"></div>
+       <div class="swiper-button-prev" slot="button-prev"></div>
+       <div class="swiper-button-next" slot="button-next"></div>
+
+     </div>
+       `
+     > 嵌套的轮播图通过以下配置进行单独处理swiper之间而不受影响
+
+       ` data() {
+              return {
+                swiperOption: {
+                },
+                swiperOptionWrap: {
+                }
+              }
+         }
+       `
+     > 分页器通过给不同的类名处理而不受影响
+
+       ` data() {
+              return {
+                swiperOption: {
+                  navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev'
+                  }
+                },
+                swiperOptionWrap: {
+                  navigation: {
+                    nextEl: '.swiper-button-next-wrap',
+                    prevEl: '.swiper-button-next-wrap'
+                  }
+                }
+              }
+        }
+      `
+
+      > 前进后退的按钮通过给不同的类名处理而不受影响
+
+      + 第一步
+      `data() {
+             return {
+               swiperOption: {
+                navigation: {
+                el: '.swiper-pagination',
+                clickable: true
+                }
+              },
+              swiperOptionWrap: {
+                pagination: {
+                  el: '.swiper-pagination-wrap',
+                  clickable: true
+                }
+              }
+             }
+      }
+      `
+       + 第二步
+         > 在swiper.css中添加新的类选择器.swiper-button-next-wrap、.swiper-button-next-wrap样式
+           和swiper-button-prev、swiper-button-next的样式一样,
+
+     > 给swiper添加滚动条[swiper.css中没有给滚动条设置高度出现未显示的问题]
+
+       + <div class="swiper-scrollbar" style="top: 3px;height: 4px;"></div>
+       + 通过在swiper.css中给.swiper-scrollbar-drag类选择器添加样式控制滚动条的颜色。
+
+     > 控制前进后退按钮的颜色。
+       + 在swiper.css中, 控制以下类选择器中的background-image属性url中的 '%23007aff'部分来控制颜色。
+       `.swiper-button-prev,
+       .swiper-container-rtl .swiper-button-next {
+         background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2027%2044'%3E%3Cpath%20d%3D'M0%2C22L22%2C0l2.1%2C2.1L4.2%2C22l19.9%2C19.9L22%2C44L0%2C22L0%2C22L0%2C22z'%20fill%3D'%23007aff'%2F%3E%3C%2Fsvg%3E");
+         left: 10px;
+         right: auto;
+       }
+       .swiper-button-next,
+       .swiper-container-rtl .swiper-button-prev {
+         background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2027%2044'%3E%3Cpath%20d%3D'M27%2C22L27%2C22L5%2C44l-2.1-2.1L22.8%2C22L2.9%2C2.1L5%2C0L27%2C22L27%2C22z'%20fill%3D'%23007aff'%2F%3E%3C%2Fsvg%3E");
+         right: 10px;
+         left: auto;
+       }
+       `
+     > swiper中禁止手动滑动
+
+       + 给<swiper-slide>标签添加class="swiper-no-swiping"当前slide被禁用。
+       +给<swiper>标签添加class="swiper-no-swiping"全部slide被禁用
+
+     > 给.sowing-wrap设置730px (图片的宽度为730px) 第一张图片的宽度太小,把最后一张图片的部分显示出来了.
+       + 解决：给图片设置为对齐方式
+     >
+       ]
+# vue各个文件引入。
+  + main.js =>入口 全局使用
+  + 指定文件 => 内部使用
+  + index.html => 全局使用。
+
+# 回到顶部
+  + vuex
+  + 自定义指令directive
+# vuex的应用
+  + 状态使用
+  + npm install vuex --save
+# 逻辑处理
+  + 刷新页面
+  + 不同角度进入
+# webpack
+  + 配置jquery到webpack中,在vue中全局引用jquery
+  `
+  1.npm install jquery => 这里涉及到jquery的版本, 最新的版本配置到webpack中不生效
+  2. webpack.base.conf.js中配置
+     + const webpack = require('webpack')
+     + plugins: [
+           new webpack.optimize.CommonsChunkPlugin('common.js'),
+           new webpack.ProvidePlugin({
+             $: 'jquery',
+             jQuery: 'jquery'
+           })
+         ]
+  3. 在main.js中 import $ from 'jquery';
+  `
+
+# 自定义指令:
+ Vue.directive(directiveName,function(){
+    //钩子函数
+    inserted: 被绑定元素插入父节点时调用（父节点存在即可调用，不必存在于 document 中）
+    // 参数
+    el: 指令所绑定的元素，可以用来直接操作 DOM
+    binding: 一个对象，包含以下属性：
+       name: 指令名，不包括 v- 前缀。
+       value: 指令的绑定值， 例如： v-my-directive="1 + 1", value 的值是 2。
+       oldValue: 指令绑定的前一个值，仅在 update 和 componentUpdated 钩子中可用。无论值是否改变都可用
+       expression: 绑定值的表达式或变量名。 例如 v-my-directive="1 + 1" ， expression 的值是 "1 + 1"
+       arg: 传给指令的参数。例如 v-my-directive:foo， arg 的值是 "foo"
+ })
+
+# vue-fullpage 全屏滚动
+
+# 全屏滚动 vue-awesome-swiper
+
+# 自定义属性
+
+<div id="text" value="123"  data-name="黑哒哒的盟友"><div>
+
+JQUERY取值：$("#text").data("name");
+
+# 可视高度
+  $(window).height()
+  document.documentElement.clientHeight
+
+# pagination 分页
+
+  1. 加载两个文件
+    + pagination.vue
+      ( `
+          methods: {
+                setCurrent: function(idx) {
+                  if( this.currentValue != idx && idx > 0 && idx < this.page + 1) {
+                    this.currentValue = idx;
+                    this.$parent.pagechange(idx);
+                  }
+                }
+              }
+        `)
+    + pagination.css
+
+  2. 把分页组件引入到要[使用的组件]中
+     methods:{
+        pagechange(pageNumber) {
+          //...调用接口获取数据
+        }
+     }
+
+# axios vue中处理ajax异步请求的对象。
+  + npm install axios --save 首先安装axios
+  + 引入到main.js中 import axios from './axios'
+  + Vue.prototype.$axios = axios 放到Vue的原型中。
+
+# axios vue中配置token
+  // 默认值添加
+  + axios.defaults.timeout = 5000;
+  + axios.defaults.baseURL = '/api';
+  // request拦截器处理token的添加
+    axios.interceptors.request.use(function (config) {
+        // 在发送请求之前做些什么
+        return config;
+      }, function (error) {
+        // 对请求错误做些什么
+        return Promise.reject(error);
+      });
+
+  // response 拦截器处理token的更新。隔一段时间token失效之后的处理, 把token保存到vuex中,可以使用状态管理中的dispatch()完成更新。
+    axios.interceptors.response.use(function (response) {
+        // 对响应数据做点什么
+        return response;
+      }, function (error) {
+        // 对响应错误做点什么
+        return Promise.reject(error);
+      });
+
+# axios vue中配置cookie
+  + axios默认情况不会携带cookie, 需要使用axios.defaults.withCredentials = true;来解决
+  + 这时需要后台配合：
+    + header头部 Access-Control-Credentials: true;
+    + Access-Control-Allow-Origin的值不能设置为'*', 因为会与axios.defaults.withCredentials = true;冲突, 所以需要配置指定地址。
+
+# vue 中使用md5算法
+  + npm install md5 --save
+  + 把md5 放在Vue实例的原型中, Vue.prototype.$md5 = md5; 以便于全局使用

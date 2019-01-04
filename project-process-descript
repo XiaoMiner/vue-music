@@ -1,0 +1,35 @@
+# vue-project项目进度说明
+
+  > 其他两个文件
+    + project-attention-point-description 该文件主要是在开发过程的一些注意的点说明文件
+    + project-demand-description 该文件主要是在开发过程中用到的功能点说明文件。
+
+  ## 安装全局的vue-cli
+
+     + npm install vue-cli –g
+
+  ## 项目目录创建
+
+     + vue init webpack 项目名称 (版本为2.x)
+       + 目录结构说明url: https://blog.csdn.net/weixin_36185028/article/details/78637528
+     + npm install
+       + 安装项目所需的依赖
+
+  ## 项目开发的功能
+     + vue-router实现单页面应用。
+     + swiper.js实现轮播、整屏滑动。
+     + vee-validate 实现表单验证
+     + md5加密处理。
+     + 自定义分页组件
+     + vuex状态管理处理回到顶部的状态。
+     + axios进行异步请求、配置token、配置cookie
+     + 原生方式实现懒加载。
+     + 鼠标拖动盒子。
+
+  ## 启动项目
+
+     + npm start
+
+  ## 编译项目
+
+     + npm run build
