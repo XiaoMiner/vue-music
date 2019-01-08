@@ -4,75 +4,16 @@
       <div id="header-top">
         <div id="header-top-wrap" class="clearFix">
           <div id="header-logo" class="fl">
-            <router-link to="/netCloudMusic">网易云音乐</router-link>
+            <i class="logo-icon"></i>
+            <router-link to="/netCloudMusic">Ann云音乐</router-link>
           </div>
 
           <ul class="fl clearFix">
             <li class="fl" v-bind:class="{navClickedBg: isShowFM, navRecoveryDefault: isRecoveryFM}"><router-link class="router-link" to="/findMusic" @click.native="toggleNetCloudNav(findMusic)">发现音乐</router-link><i v-bind:class="{redArrow: isShowFM}"></i></li>
             <li class="fl" v-bind:class="{navClickedBg: isShowMM, navRecoveryDefault: isRecoveryMM}"><router-link class="router-link" to="/myMusic" @click.native="toggleNetCloudNav(myMusic)">我的音乐</router-link><i v-bind:class="{redArrow: isShowMM}"></i></li>
-            <li class="fl" v-bind:class="{navClickedBg: isShowF, navRecoveryDefault: isRecoveryF}"><router-link class="router-link" to="/friend" @click.native="toggleNetCloudNav(friend)">朋友</router-link><i v-bind:class="{redArrow: isShowF}"></i></li>
-            <li class="fl" v-bind:class="{navClickedBg: isShowSM, navRecoveryDefault: isRecoverySM}"><router-link class="router-link" to="/shoppingMall" @click.native="toggleNetCloudNav(shoppingMall)">商城</router-link><i v-bind:class="{redArrow: isShowSM}"></i></li>
             <li class="fl" v-bind:class="{navClickedBg: isShowSP, navRecoveryDefault: isRecoverySP}"><router-link class="router-link" to="/musician" @click.native="toggleNetCloudNav(musician)">音乐人</router-link><i v-bind:class="{redArrow: isShowSP}"></i></li>
             <li class="fl" v-bind:class="{navClickedBg: isShowDC, navRecoveryDefault: isRecoveryDC}"><router-link class="router-link" to="/downloadClient" @click.native="toggleNetCloudNav(downloadClient)">下载客户端</router-link><i class="hot"></i><i v-bind:class="{redArrow: isShowDC}"></i></li>
           </ul>
-
-          <div id="head" class="fr clearFix" @mouseover="showUserInfoList()" @mouseout="hideUserInfoList()">
-              <div class="fl head-portrait pointer">
-                <img src="http://p3.music.126.net/Xw6eKK7XwcMr4yzORH_zzA==/109951162842383781.jpg?param=30y30" alt="图片">
-              </div>
-              <i class="arrow fr"></i>
-            <div class="user-personal-info" :class="{styleShow:showUserInfo, styleHide: hideUserInfo }">
-              <ul>
-                <li>
-                  <a href="javascript" class="user-mask">
-                    <i class="info-icon1 info-icon"></i>
-                    <span class="info-description">我的主页</span>
-                  </a>
-
-                </li>
-                <li>
-                  <a href="javascript" class="user-mask">
-                    <i class="info-icon2 info-icon"></i>
-                    <span class="info-description">我的消息</span>
-                  </a>
-
-                </li>
-                <li>
-                  <a href="javascript" class="user-mask">
-                    <i class="info-icon3 info-icon"></i>
-                    <span class="info-description">我的等级</span>
-                  </a>
-
-                </li>
-                <li>
-                  <a href="javascript" class="user-mask">
-                    <i class="info-icon4 info-icon"></i>
-                    <span class="info-description">VIP会员</span>
-                  </a>
-
-                </li>
-                <li>
-                  <a href="javascript" class="user-mask">
-                    <i class="info-icon5 info-icon"></i>
-                    <span class="info-description">个人设置</span>
-                  </a>
-
-                </li>
-                <li>
-                  <a href="javascript" class="user-mask">
-                    <i class="info-icon6 info-icon"></i>
-                    <span class="info-description">退出</span>
-                  </a>
-
-                </li>
-              </ul>
-            </div>
-          </div>
-          <a href="javascript: void(0)" id="video" class="fr pointer video-submission">视频投稿</a>
-          <div class="fr search clearFix">
-            <i class="magnifier fl pointer"></i>
-            <input class="fr" type="text" placeholder="音乐/视频/电台/用户">
-          </div>
 
         </div>
       </div>
@@ -93,20 +34,14 @@ export default {
       store,
       isShowFM: true,
       isShowMM: false,
-      isShowF: false,
-      isShowSM: false,
       isShowSP: false,
       isShowDC: false,
       isRecoveryFM: false,
       isRecoveryMM: true,
-      isRecoveryF: true,
-      isRecoverySM: true,
       isRecoverySP: true,
       isRecoveryDC: true,
       findMusic: '发现音乐',
       myMusic: '我的音乐',
-      friend: '朋友',
-      shoppingMall: '商城',
       musician: '音乐人',
       downloadClient: '下载客户端',
       showUserInfo: false,
@@ -125,8 +60,8 @@ export default {
       this.netCloudNavName = '发现音乐'
     }else if(routeName == 'myMusic'){
       this.netCloudNavName = '我的音乐'
-    }else if(routeName == 'friend') {
-      this.netCloudNavName = '朋友'
+    }else if(routeName == 'musician') {
+      this.netCloudNavName = '音乐人'
     }else if(routeName == 'downloadClient'){
       this.netCloudNavName = '下载客户端'
     }
@@ -138,16 +73,12 @@ export default {
       /* 选中导航时箭头和背景色显示处理 */
       this.isShowFM = false
       this.isShowMM = false
-      this.isShowF = false
-      this.isShowSM = false
       this.isShowSP = false
       this.isShowDC = false
 
       /* 未选中的导航恢复默认的背景 */
       this.isRecoveryFM = true
       this.isRecoveryMM = true
-      this.isRecoveryF = true
-      this.isRecoverySM = true
       this.isRecoverySP = true
       this.isRecoveryDC = true
 
@@ -159,14 +90,6 @@ export default {
         case '我的音乐':
           this.isShowMM = booleanArrow
           this.isRecoveryMM = booleanRecovery
-          break
-        case '朋友':
-          this.isShowF = booleanArrow
-          this.isRecoveryF = booleanRecovery
-          break
-        case '商城':
-          this.isShowSM = booleanArrow
-          this.isRecoverySM = booleanRecovery
           break
         case '音乐人':
           this.isShowSP = booleanArrow
@@ -182,10 +105,6 @@ export default {
       if (netCloudNavName === '发现音乐') {
         this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
       } else if (netCloudNavName === '我的音乐') {
-        this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
-      } else if (netCloudNavName === '朋友') {
-        this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
-      } else if (netCloudNavName === '商城') {
         this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
       } else if (netCloudNavName === '音乐人') {
         this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
@@ -317,17 +236,30 @@ export default {
   }
   /*logo部分处理*/
   #header-logo {
-    width: 153px;
+    width: 182px;
     height: 69px;
     margin-right: 30px;
-    background: url('../../assets/images/header.png') no-repeat;
+  }
+  #header-logo .logo-icon{
+    display: inline-block;
+    float: left;
+    width: 48px;
+    height: 48px;
+    margin: 12px 0 0 4px;
+    /*background: url('../../assets/images/Ann_cloud.png') no-repeat;*/
+    background: url('../../assets/images/Ann_cloud_one.png') no-repeat;
   }
   #header-logo a {
     display: inline-block;
-    width: 153px;
+    float: left;
+    width: 130px;
     height: 100%;
-    /*text-indent首行文本的缩进*/
-    text-indent: -9999px;
+    color: #fff;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    /*font: 12px/1 Tahoma,Helvetica,Arial,"\5b8b\4f53",sans-serif;*/
+    font-size: 24px;
+    line-height: 69px;
   }
 
   /*列表部分处理*/

@@ -4,7 +4,7 @@
       <div class="login-validate-wrap">
         <h3 class="login-validate-h3">登录</h3>
         <div class="login-validate-content">
-          <form @submit.prevent="submit">
+          <form @submit.prevent="submit" autocomplete="off">
             <div class="clearFix">
               <label for="email" class="login-validate-content-label">用户帐号</label>
               <input class="login-validate-content-input" id="email" v-model="userName" name="email" type="text">
@@ -32,7 +32,7 @@ export default {
       clientHeight: document.documentElement.clientHeight,
       userName: '',
       userPassword: '',
-      userNameInfo: this.$md5('17853100883@163.com'),
+      userNameInfo: this.$md5('admin'),
       userPasswordInfo: this.$md5('123456'),
       isShow: false,
       isHide: true,
@@ -68,7 +68,7 @@ export default {
       this.isShow = false;
       this.isHide = true;
       if(this.$md5(this.userName) == this.userNameInfo && this.$md5(this.userPassword) == this.userPasswordInfo){
-        window.location = window.location.origin+'/#/recommend';
+        window.location = window.location.origin+'/#/songSheet';
       }
     },
     mouseDownHandle(e){

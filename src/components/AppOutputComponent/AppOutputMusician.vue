@@ -2,19 +2,7 @@
     <div id="musician">
       <div class="musician-header">
         <div class="musician-header-wrap">
-          <router-link class="header-logo" to="/recommend">网易云音乐</router-link>
-          <ul class="header-nav">
-            <li class="header-nav-list fs"><a class="nav-list-a" style="color: #fff" href="javascript:void(0)">首页</a></li>
-            <li class="header-nav-list fs"><a class="nav-list-a" href="javascript:void(0)">个人中心</a></li>
-            <li class="header-nav-list fs"><a class="nav-list-a" href="javascript:void(0)">常见问题</a></li>
-          </ul>
-          <div class="header-user-info">
-            <a class="header-join-musician" href="javascript:void(0)">加入音乐人</a>
-            <a class="header-user-name" href="javascript:void(0)">NetCloudMiner</a>
-            <a class="header-message-icon" href="javascript:void(0)"></a>
-            <span class="header-hr-line"></span>
-            <a class="header-sign-out" href="javascript:void(0)">退出</a>
-          </div>
+          <router-link class="header-logo" to="/recommend">Ann云音乐</router-link>
         </div>
       </div>
       <FullPage/>
