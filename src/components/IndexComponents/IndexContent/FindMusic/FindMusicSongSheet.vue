@@ -367,7 +367,8 @@ export default {
 
 /*歌手列表*/
 .singer-sort-list .singer-list {
-
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 /*指定歌手*/
@@ -617,5 +618,30 @@ table tr:nth-child(2n) {
 }
   .singer-list .selectedSingerActive {
     background: #eee;
+  }
+
+  /*滚动条样式*/
+  /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
+  .singer-list::-webkit-scrollbar
+  {
+    width: 12px;
+    height: 12px;
+    background-color: #F5F5F5;
+  }
+
+  /*定义滚动条轨道 内阴影+圆角*/
+  .singer-list::-webkit-scrollbar-track
+  {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+    border-radius: 10px;
+    background-color: #ddd;
+  }
+
+  /*定义滑块 内阴影+圆角*/
+  .singer-list::-webkit-scrollbar-thumb
+  {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+    background-color: ##eee;
   }
 </style>
