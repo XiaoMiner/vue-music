@@ -103,8 +103,8 @@
       <!--第六章view-->
       <swiper-slide class="swiper-no-swiping fullpage-six-view fs">
         <div class="six-view-content">
-          <h2 class="six-view-h2">只需三步轻松成为网易音乐人</h2>
-          <p class="six-view-p">想要成为网易音乐人很简单，只要按照下面的介绍完成三个步骤的操作，我们承诺会在工作日24小时内完成审核！</p>
+          <h2 class="six-view-h2">只需三步轻松成为Ann音乐人</h2>
+          <p class="six-view-p">想要成为Ann音乐人很简单，只要按照下面的介绍完成三个步骤的操作，我们承诺会在工作日24小时内完成审核！</p>
           <ul class="six-view-ul clearFix">
             <li class="six-view-list">
               <p class="six-view-list-p1">第一步</p>

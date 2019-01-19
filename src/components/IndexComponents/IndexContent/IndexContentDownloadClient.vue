@@ -141,8 +141,8 @@
       </div>
       <div class="download-seven-view">
         <div class="seven-view-wrap">
-           <h3 class="svw-h3">网易云音乐</h3>
-           <p class="svw-p">下载网易云音乐客户端，随时随地畅享动听好音乐</p>
+           <h3 class="svw-h3">Ann云音乐</h3>
+           <p class="svw-p">下载Ann云音乐客户端，随时随地畅享动听好音乐</p>
           <div class="net-cloud-download-form">
               <ul class="clearFix">
                 <li class="clearFix ncdf-li">
@@ -206,10 +206,12 @@ export default {
     firstView(){
       $(this.$refs.viewWrapImg).css({
         transform: 'translate(812px, 0)',
-        transition: 'transform 1s ease'
+        opacity: 1,
+        transition: 'all 1s ease'
       })
       $(this.$refs.versionShow).css({
         transform: 'translate(-638px, 0)',
+        opacity: 1,
         transition: 'transform 1s ease'
       });
     },
@@ -371,6 +373,7 @@ export default {
     width: 380px;
     height: 232px;
     margin: 194px -630px 0 0;
+    opacity: 0;
   }
   .download-version-show .version-show-update {
     cursor: pointer;
@@ -382,6 +385,7 @@ export default {
     float: left;
     margin-top: 14px;
     margin-left: -812px;
+    opacity: 0;
   }
   .download-version-show .version-show-li {
     width: 170px;

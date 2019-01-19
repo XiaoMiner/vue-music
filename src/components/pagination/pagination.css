@@ -3,7 +3,6 @@
   padding-left: 0;
   margin: 20px 0;
   border-radius: 4px;
-  background-color: #f5f5f5;
 }
 .pagination > li {
   float: left;
@@ -16,7 +15,7 @@
   padding: 6px 12px;
   margin-left: -1px;
   line-height: 1.42857143;
-  color: #337ab7;
+  color: #C20C0C;
   text-decoration: none;
   background-color: #fff;
   border: 1px solid #ddd;
@@ -50,8 +49,8 @@
   z-index: 3;
   color: #fff;
   cursor: default;
-  background-color: #337ab7;
-  border-color: #337ab7;
+  background-color:#C20C0C;
+  border-color: #C20C0C;
 }
 .pagination > .disabled > span,
 .pagination > .disabled > span:hover,

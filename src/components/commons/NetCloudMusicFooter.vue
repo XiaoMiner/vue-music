@@ -5,7 +5,7 @@
         <div class="net-cloud-address">Ann版权所有©2018-2019</div>
         <div class="net-cloud-communication-mode">
           <span>联系邮箱:</span>
-          <a href="javascript:void(0)">2424197234@qq.com</a>
+          <a href="https://mail.qq.com/" target="_blank">2865574790@qq.com</a>
         </div>
       </div>
     </div>

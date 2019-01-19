@@ -1,26 +1,25 @@
 <template>
-  <div id="my-login" :style="{height: clientHeight+'px'}">
-    <div class="login-validate-part" ref="loginPart" @mousedown="mouseDownHandle" @mousemove="mouseMoveHandle" @mouseup="mouseUpHandle">
-      <div class="login-validate-wrap">
-        <h3 class="login-validate-h3">登录</h3>
-        <div class="login-validate-content">
-          <form @submit.prevent="submit" autocomplete="off">
-            <div class="clearFix">
-              <label for="email" class="login-validate-content-label">用户帐号</label>
-              <input class="login-validate-content-input" id="email" v-model="userName" name="email" type="text">
-            </div>
-            <br/>
-            <div class="clearFix">
-              <label for="password" class="login-validate-content-label">用户密码</label>
-              <input type="text" class="login-validate-content-input" v-model="userPassword" id="password" name="password">
-            </div>
-            <p :class="{ShowStyle: isShow, hideStyle: isHide}" style="width:280px; height: 20px;">{{detectionInfo}}</p>
-            <button type="submit" class="login-validate-content-button pointer" value="登录">登录</button>
-          </form>
+  <div id="my-login">
+      <div class="login-validate-part">
+        <div class="login-validate-login">
+          <h3 class="login-validate-h3">Ann音乐登录</h3>
+          <div class="login-validate-content">
+            <form @submit.prevent="submit" autocomplete="off">
+              <div class="clearFix">
+                <label for="email" class="login-validate-content-label">用户帐号:</label>
+                <input class="login-validate-content-input" id="email" placeholder="请输入用户帐号 . . ." v-model="userName" name="email" type="text">
+              </div>
+              <br/>
+              <div class="user-password clearFix">
+                <label for="password" class="login-validate-content-label">用户密码:</label>
+                <input type="password" class="login-validate-content-input" placeholder="请输入用户密码 . . ." v-model="userPassword" id="password" name="password">
+              </div>
+              <p :class="{ShowStyle: isShow, hideStyle: isHide}" style="height: 20px; color:red; font-size: 18px;text-align: center;margin: 14px 0 0 0">{{detectionInfo}}</p>
+              <button type="submit" class="login-validate-content-button pointer" value="登录">登录</button>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
-
   </div>
 </template>
 
@@ -29,7 +28,6 @@ export default {
   name: 'MyLogin',
   data(){
     return {
-      clientHeight: document.documentElement.clientHeight,
       userName: '',
       userPassword: '',
       userNameInfo: this.$md5('admin'),
@@ -51,63 +49,26 @@ export default {
       if(this.userName == '' && this.userPassword == ''){
         this.isShow = true;
         this.isHide = false;
-        this.detectionInfo = '用户名称不能为空'
+        this.detectionInfo = '用户名称不能为空！'
         return ;
       }else if(this.userName != '' && this.userPassword == ''){
         this.isShow = true;
         this.isHide = false;
-        this.detectionInfo = '用户密码不能为空'
+        this.detectionInfo = '用户密码不能为空！'
         return ;
       }else if(this.userName == '' && this.userPassword != ''){
         this.isShow = true;
         this.isHide = false;
-        this.detectionInfo = '用户名称不能为空'
+        this.detectionInfo = '用户名称不能为空!'
         return ;
       }
       // 帐号 密码 都不为空。
       this.isShow = false;
       this.isHide = true;
       if(this.$md5(this.userName) == this.userNameInfo && this.$md5(this.userPassword) == this.userPasswordInfo){
-        window.location = window.location.origin+'/#/songSheet';
+        window.location = window.location.origin+'/#/myMusicIndex';
       }
     },
-    mouseDownHandle(e){
-      // 鼠标按下时,计算鼠标在盒子中的位置
-      // console.log(e);
-      // console.log('mouseDown')
-      this.mousePositionBoxX = parseInt(e.clientX) - parseInt($(this.$refs.loginPart)[0].offsetLeft);
-      this.mousePositionBoxY = parseInt(e.clientY) - parseInt($(this.$refs.loginPart)[0].offsetTop);
-     /* console.log('mouseDown'+ e.clientX);
-      console.log('mouseDownElementOffsetLe'+$(this.$refs.loginPart)[0].offsetLeft);
-      console.log('mouseInBox' + this.mousePositionBoxX)*/
-      this.isDown = true;
-    },
-    mouseUpHandle(){
-      // console.log('mouseUp');
-      this.isDown = false;
-    },
-    mouseMoveHandle(e){
-      // 鼠标是否脱离了拖动元素
-    /* let differenceX = e.clientX - parseInt($(this.$refs.loginPart)[0].offsetLeft),
-          differenceY = e.clientY - parseInt($(this.$refs.loginPart)[0].offsetTop),
-          elementOffsetHeight = $(this.$refs.loginPart)[0].offsetHeight,
-          elementOffsetWidth= $(this.$refs.loginPart)[0].offsetWidth;
-      if(differenceX <= elementOffsetWidth || differenceY <= elementOffsetHeight){
-        this.isLeaveEle = 0;
-      }else {
-        this.isLeaveEle = 1;
-      }*/
-      if(this.isDown){
-        let distanceX = parseInt(e.clientX) - this.mousePositionBoxX;
-        let distanceY = parseInt(e.clientY) - this.mousePositionBoxY;
-
-        $(this.$refs.loginPart)[0].style.left = distanceX + 'px';
-        $(this.$refs.loginPart)[0].style.top = distanceY + 'px';
-        /*console.log('mouseMoveClientX'+e.clientX);
-        console.log('mouseMoveOffsetLeft' + distanceX);*/
-      }
-      // console.log('mouseMove');
-    }
   },
   watch:{
     userName(newValue, oldValue){
@@ -128,54 +89,76 @@ export default {
 </script>
 
 <style scoped>
+  #my-login:before{
+    display: table;
+    content: "";
+  }
 #my-login {
   width: 100%;
-  background: #C20C0C;
-  border: 1px solid #c20c0c;
-  box-sizing: border-box;
+  height: 100%;
+  background: rgba(0, 0, 0, .5);
   position: relative;
 
 }
 #my-login .login-validate-part {
-  width: 362px;
-  height: 350px;
-  background: #fff;
-  position: absolute;
-  left: 683px;
-  top: 124px;
+  width: 600px;
+  height: 324px;
+  background: #B5A476;
+  border-radius: 4px;
+  margin: 12% auto 0;
 }
-#my-login .login-validate-wrap {
+
+#my-login .login-validate-login {
   margin: 0 24px;
 }
 #my-login .login-validate-h3 {
-  padding: 10px 0 0;
+  padding: 10px 0px;
   text-align: center;
-  color: #222;
-  font-size: 24px;
+  color: #6c5b4c;
+  font-size: 32px;
 }
 .login-validate-part .login-validate-content {
-  width: 280px;
+  width: 360px;
   margin: 24px auto;
   position: relative;
 }
+/*用户密码*/
+.login-validate-content .user-password {
+  margin: 14px 0 0 0;
+}
 .login-validate-content .login-validate-content-label {
   float: left;
+  color: rgba(0, 0, 0, .5);
+  font-size: 18px;
+  margin: 4px 0 0 0;
 }
 .login-validate-content .login-validate-content-input {
-  float: right;
-  margin-right: 24px;
+  height: 32px;
+  width: 240px;
+  float: left;
+  margin-left: 24px;
+  color: rgba(0, 0, 0, .5);
+  background: #fff;
+  border-radius: 4px;
+  outline: none;
+  border: none;
+  padding: 0 0 0 7px;
+  /*background: rgba(0, 0, 0, .3);*/
 }
 .login-validate-content .login-validate-content-button {
   position: absolute;
   outline: none;
   border: none;
-  width: 174px;
-  height: 34px;
+  width: 175px;
+  height: 42px;
   border-radius: 4px;
   left: 50%;
   margin-left: -87px;
-  bottom: -54px;
+  bottom: -74px;
+  font-size: 18px;
+  background: rgba(0, 0, 0, .3);
 }
+
 .ShowStyle {
     visibility: visible;
 }

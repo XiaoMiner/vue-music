@@ -86,7 +86,9 @@ export default {
 </script>
 
 <style scoped>
-  #find-music {}
+  #find-music {
+    height: 100%;
+  }
   .find-music-top {
     height: 35px;
     background-color: #C20C0C;

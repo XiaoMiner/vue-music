@@ -7,7 +7,7 @@
       <li :class="{'disabled': currentValue == page}"><a href="javascript:;" @click="setCurrent(currentValue + 1)"> 下一页</a></li>
       <li :class="{'disabled': currentValue == page}"><a href="javascript:;" @click="setCurrent(page)"> 尾页 </a></li>
       <!-- <li><span>共  {{ total }}   条</span></li>     -->
-      <li><span> 每页 {{ display }}  条 </span></li>
+      <!--<li><span> 每页 {{ display }}  条 </span></li>-->
       <li><span> 共 {{ page }} 页 </span></li>
        <li><span> 当前第 {{ currentValue }} 页 </span></li>
     </ul>

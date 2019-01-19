@@ -18,7 +18,6 @@ Vue.use(Router)
 var vueRouter = new Router({
   mode: 'hash',// 模式不能修改为history,因为有用到hash处理逻辑。
   scrollBehavior (to, from, savedPosition) {
-    console.log(savedPosition)
     if (savedPosition) {
       return savedPosition
     } else {
@@ -26,7 +25,7 @@ var vueRouter = new Router({
     }
   },
   routes: [
-    {path: '/netCloudMusic', redirect: '/songSheet'},
+    {path: '/netCloudMusic', redirect: '/myMusicIndex'},
     {path: '/findMusic', redirect: '/songSheet'},
     {path: '/login', name: 'MyLogin', component:MyLogin },
     {
@@ -35,6 +34,14 @@ var vueRouter = new Router({
       component: NetCloudMusicIndex,
       redirect: '/login',
       children: [
+        {
+          path: 'myMusicIndex',
+          name: 'myMusicIndex',
+          component: resolve => require(['@/components/IndexComponents/IndexContent/MyMusicIndex'], resolve),
+          meta: {
+            auth:true
+          }
+        },
         {
           path: '/findMusic',
           name: 'IndexContentFindMusic',
@@ -68,18 +75,13 @@ var vueRouter = new Router({
     }
   ]
 })
+
+//处理当前页面没有登录过本网站时的登录处理。
 vueRouter.beforeEach(function(to, from, next){
-  const nextRoute = ['/friend', '/testOne', '/testTwo'];
-  let hashFriend = sessionStorage.getItem('hashFriend');
   console.log(to);
-  if(to.path == '/friend'){
-    if(hashFriend == '/testTwo'){
-      sessionStorage.setItem('hashFriend', '');
-      vueRouter.push({name: 'TestTwo'});
-    }else if(hashFriend == '/testOne'){
-      vueRouter.push({name: 'TestOne'});
-    }
-  }
+  /*if(to.path ==){
+
+  }*/
 
   next();
 })

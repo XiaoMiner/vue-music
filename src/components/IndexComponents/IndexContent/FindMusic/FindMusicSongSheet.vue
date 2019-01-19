@@ -1,746 +1,302 @@
 <template>
 <div id="song-sheet">
   <div class="song-sheet-wrap clearFix">
-    <div class="song-sheet-wrap-header">
-      <h3 class="sswrap-header-h3 fs">全部</h3>
-      <div class="sswrap-header-div clearFix">
-        <a class="sswrap-header-div-aone" href="javascript:void(0)">热门</a>
-        <a class="sswrap-header-div-atwo" href="javascript:void(0)">最新</a>
+    <!--歌手分类列表-->
+    <div class="singer-sort-list">
+        <div class="all-songs" @click="toggleAllSongs">{{'全部('+songPaginationInfoAll.totalNumber+')'}}</div>
+        <div class="other-singer-song" @click="toggleArrow()">
+          <span class="song-arrow" :class="{arrowRotateClose: arrowStatus == false, arrowRotateOpen: arrowStatus == true}">▲</span>
+          <span class="other-sort">分类歌手</span>
+        </div>
+      <div class="singer-list" v-show="arrowStatus">
+          <li class="singer-item" v-for="(singleSinger,index) in singerListData" :class="{selectedSingerActive: isSelectedSinger == index}" @click="toggleSinger(index, singleSinger)"><span>{{singleSinger.singerName}}</span></li>
       </div>
     </div>
     <div class="song-sheet-wrap-content">
-      <ul class="sswrap-content-ul">
-        <li class="sswrap-content-list" v-for="singleInfo in songListData">
-          <div class="sswrap-content-image-part">
-            <a class="sswrap-content-image-mask" :title="singleInfo.imgDescription" href="javascript: void(0)"></a>
-            <img class="sswrap-content-img" :src="singleInfo.imgUrl" alt="图片">
-            <div class="sswrap-content-play">
-              <i class="sswrap-content-headset-icon"></i>
-              <span class="sswrap-content-play-number">{{singleInfo.player}}</span>
-              <i class="sswrap-content-play-button pointer"></i>
+      <div class="song-sheet-header">
+        <i class="song-sheet-header-icon"></i>
+        <span class="song-sheet-singer-name">{{singerTitle}}</span>
+        <span class="have-song-number" v-if="isSelectedAll == 1">{{songPaginationInfoAll.totalNumber}}首歌</span>
+        <span class="have-song-number" v-if="isSelectedAll == 0">{{songPaginationInfoSection.totalNumber}}首歌</span>
+      </div>
+      <div class="sswrap-content-ul">
+        <table>
+          <tr>
+            <th>序号</th>
+            <th>播放</th>
+            <th>歌曲标题</th>
+            <th>时长</th>
+            <th>歌手</th>
+          </tr>
+          <tr v-for="(singleSong, index) in songListData" @mouseover="mouseOverTr(index)" @mouseout="mouseOutTr">
+          <td>{{index + 1}}</td>
+          <td><i class="operate-song-button" :class="{playButtonActive: playIndex == index}" @click="togglePlaySong(index, singleSong)"></i></td>
+          <td>{{singleSong.songName}}</td>
+          <td class="add-song-add">{{singleSong.duration}}
+            <div class="operate-song" v-if="isShowAddCurrentArea == index">
+              <i class="operate-song-add" @click="showOperateModal(singleSong)"></i>
             </div>
-          </div>
-          <p class="sswrap-content-image-description pointer" :title="singleInfo.imgDescription">{{singleInfo.imgDescription}}</p>
-          <p>
-            <span class="sswrap-content-by">by</span>
-            <a class="sswrap-content-songer pointer" :title="singleInfo.singerName">{{singleInfo.singerName}}</a>
-          </p>
-        </li>
-      </ul>
-    </div>
-    <div class="pagination-nav">
-      <pagination :page="page" :currentPage="pageNumber"></pagination>
+          </td>
+          <td>{{singleSong.singerName}}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="pagination-nav">
+        <pagination v-if="isSelectedAll == 0" :page="songPaginationInfoSection.totalPage" :currentPage="songPaginationInfoSection.currentIndex"></pagination>
+        <pagination v-if="isSelectedAll == 1" :page="songPaginationInfoAll.totalPage" :currentPage="songPaginationInfoAll.currentIndex"></pagination>
+      </div>
     </div>
   </div>
-  <NetCloudMusicFooter/>
+  <!--底部-->
+  <div class="net-cloud-music-footer">
 
+  </div>
+  <!--模态款-->
+  <div class="confirm-modal" v-if="isShowOperateModal">
+    <div class="confirm-modal-wrap">
+      <div class="confirm-modal-header">
+        <span class="operate-prompt">提示</span>
+        <span class="close-modal" @click="closeModal">x</span>
+      </div>
+      <div class="operate-des-content">
+        <div class="operate-song-des">
+          是否将该歌曲添加到我的音乐中?
+        </div>
+        <div class="operate-song-button">
+          <button class="operate-song-confirm" @click="confirmModal">确定</button>
+          <button class="operate-song-cancel" @click="closeModal">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 </template>
 
 <script>
 import pagination from './../../../pagination/pagination'
 import NetCloudMusicFooter from './../../../commons/NetCloudMusicFooter'
+import filterMusicTime from './../../../../js/filterMusicTime';
 export default {
   name: 'FindMusicSongSheet',
   data(){
     return {
+      fileServer: this.$interface.musicFileServerUrl,
       page: 3,
-      pageNumber: 1,
-      songListData: [],
+      songListData: [], //获取到歌曲列表
+      songPaginationInfoAll: {},//'全部' - 分页信息
+      songPaginationInfoSection: {}, // '分类歌手' - 分页信息;
+      arrowStatus: false,//箭头的状态,
+      paginationPost:{
+        index: 1,
+        size: 13
+      },// 分页参数
+      recordNumber: 0, //记录歌曲时间是否都已经处理完毕
+      playIndex: -1, //正在播放歌曲的索引
+      selectedPlaySong: '',//正在播放的歌曲
+      recordPlaySongPosition: {
+        pageIndex: 1,
+        songIndex: 0,
+      },//记录播放歌曲的位置。
+
+      singerListData: [],//歌手列表
+      isSelectedSinger: -1, //是否选中歌手
+
+      singerSongsPost: { // 获取到指定歌手的歌曲的参数
+        index: 1,
+        size: 13,
+        singerId: ''
+      },
+
+      singerTitle: '全部', //切换全部、歌手时头部的处理。
+
+      isSelectedAll: 1, // 1 -表示选中了'全部' 0选中分类的歌手
+
+      isShowAddCurrentArea: -1,//是否显示当前歌曲的操作区域
+      isShowOperateModal: 0,//是否显示操作模态框
+      selectedSongInfo: {},//当对歌曲进行操作时,进行的保存歌曲信息。
     }
   },
   mounted(){
-      this.getSongListData(this.pageNumber);
+    this.getAllSongs();
+    this.getAllSingers()
+
   },
   methods:{
-    getSongListData(currentPage){
-      if(currentPage == 1){
-        this.songListData = [
-          //第一组
-          {
-            imgUrl: 'http://p1.music.126.net/GQNAdcJpe95voMbMQnyn5g==/19139198905314433.jpg?param=140y140',
-            player: '69790',
-            imgDescription: '岁月留声｜港乐里的王家卫式情话',
-            singerName: '猫头罐与六便士'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Av1WXaORMVx9yC-Y1LRKIg==/109951163399962868.jpg?param=140y140',
-            player: '34169',
-            imgDescription: '梦幻流行 | 庄生梦蝶，噪音也迷人',
-            singerName: 'AirRadio空气赫兹'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/_3jkl_Hmqr2zi0UoO6ekbg==/109951163400283899.jpg?param=140y140',
-            player: '59122',
-            imgDescription: '没音乐会死星人的日常',
-            singerName: '六个翅膀的小粉'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/oRr1GGfQCnlpj8R3e2haSA==/109951163401451378.jpg?param=140y140',
-            player: '25165',
-            imgDescription: '【提琴电音】自悠扬起，余韵无穷',
-            singerName: '谐星七十六号'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/dNMp_W_H1zefIOcVZ3yWKw==/19000660440208767.jpg?param=140y140',
-            player: '29580',
-            imgDescription: '日系纯音 / 与你在樱花树下的誓言',
-            singerName: 'Solitudeheart'
-          },
-          //第二组
-          {
-            imgUrl: 'http://p1.music.126.net/GQNAdcJpe95voMbMQnyn5g==/19139198905314433.jpg?param=140y140',
-            player: '69790',
-            imgDescription: '岁月留声｜港乐里的王家卫式情话',
-            singerName: '猫头罐与六便士'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Av1WXaORMVx9yC-Y1LRKIg==/109951163399962868.jpg?param=140y140',
-            player: '34169',
-            imgDescription: '梦幻流行 | 庄生梦蝶，噪音也迷人',
-            singerName: 'AirRadio空气赫兹'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/_3jkl_Hmqr2zi0UoO6ekbg==/109951163400283899.jpg?param=140y140',
-            player: '59122',
-            imgDescription: '没音乐会死星人的日常',
-            singerName: '六个翅膀的小粉'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/oRr1GGfQCnlpj8R3e2haSA==/109951163401451378.jpg?param=140y140',
-            player: '25165',
-            imgDescription: '【提琴电音】自悠扬起，余韵无穷',
-            singerName: '谐星七十六号'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/dNMp_W_H1zefIOcVZ3yWKw==/19000660440208767.jpg?param=140y140',
-            player: '29580',
-            imgDescription: '日系纯音 / 与你在樱花树下的誓言',
-            singerName: 'Solitudeheart'
-          },
-          //第三组
-          {
-            imgUrl: 'http://p1.music.126.net/GQNAdcJpe95voMbMQnyn5g==/19139198905314433.jpg?param=140y140',
-            player: '69790',
-            imgDescription: '岁月留声｜港乐里的王家卫式情话',
-            singerName: '猫头罐与六便士'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Av1WXaORMVx9yC-Y1LRKIg==/109951163399962868.jpg?param=140y140',
-            player: '34169',
-            imgDescription: '梦幻流行 | 庄生梦蝶，噪音也迷人',
-            singerName: 'AirRadio空气赫兹'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/_3jkl_Hmqr2zi0UoO6ekbg==/109951163400283899.jpg?param=140y140',
-            player: '59122',
-            imgDescription: '没音乐会死星人的日常',
-            singerName: '六个翅膀的小粉'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/oRr1GGfQCnlpj8R3e2haSA==/109951163401451378.jpg?param=140y140',
-            player: '25165',
-            imgDescription: '【提琴电音】自悠扬起，余韵无穷',
-            singerName: '谐星七十六号'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/dNMp_W_H1zefIOcVZ3yWKw==/19000660440208767.jpg?param=140y140',
-            player: '29580',
-            imgDescription: '日系纯音 / 与你在樱花树下的誓言',
-            singerName: 'Solitudeheart'
-          },
-          //第四组
-          {
-            imgUrl: 'http://p1.music.126.net/GQNAdcJpe95voMbMQnyn5g==/19139198905314433.jpg?param=140y140',
-            player: '69790',
-            imgDescription: '岁月留声｜港乐里的王家卫式情话',
-            singerName: '猫头罐与六便士'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Av1WXaORMVx9yC-Y1LRKIg==/109951163399962868.jpg?param=140y140',
-            player: '34169',
-            imgDescription: '梦幻流行 | 庄生梦蝶，噪音也迷人',
-            singerName: 'AirRadio空气赫兹'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/_3jkl_Hmqr2zi0UoO6ekbg==/109951163400283899.jpg?param=140y140',
-            player: '59122',
-            imgDescription: '没音乐会死星人的日常',
-            singerName: '六个翅膀的小粉'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/oRr1GGfQCnlpj8R3e2haSA==/109951163401451378.jpg?param=140y140',
-            player: '25165',
-            imgDescription: '【提琴电音】自悠扬起，余韵无穷',
-            singerName: '谐星七十六号'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/dNMp_W_H1zefIOcVZ3yWKw==/19000660440208767.jpg?param=140y140',
-            player: '29580',
-            imgDescription: '日系纯音 / 与你在樱花树下的誓言',
-            singerName: 'Solitudeheart'
-          },
-          // 第五组
-          {
-            imgUrl: 'http://p1.music.126.net/GQNAdcJpe95voMbMQnyn5g==/19139198905314433.jpg?param=140y140',
-            player: '69790',
-            imgDescription: '岁月留声｜港乐里的王家卫式情话',
-            singerName: '猫头罐与六便士'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Av1WXaORMVx9yC-Y1LRKIg==/109951163399962868.jpg?param=140y140',
-            player: '34169',
-            imgDescription: '梦幻流行 | 庄生梦蝶，噪音也迷人',
-            singerName: 'AirRadio空气赫兹'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/_3jkl_Hmqr2zi0UoO6ekbg==/109951163400283899.jpg?param=140y140',
-            player: '59122',
-            imgDescription: '没音乐会死星人的日常',
-            singerName: '六个翅膀的小粉'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/oRr1GGfQCnlpj8R3e2haSA==/109951163401451378.jpg?param=140y140',
-            player: '25165',
-            imgDescription: '【提琴电音】自悠扬起，余韵无穷',
-            singerName: '谐星七十六号'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/dNMp_W_H1zefIOcVZ3yWKw==/19000660440208767.jpg?param=140y140',
-            player: '29580',
-            imgDescription: '日系纯音 / 与你在樱花树下的誓言',
-            singerName: 'Solitudeheart'
-          },
-          // 第六组
-          {
-            imgUrl: 'http://p1.music.126.net/GQNAdcJpe95voMbMQnyn5g==/19139198905314433.jpg?param=140y140',
-            player: '69790',
-            imgDescription: '岁月留声｜港乐里的王家卫式情话',
-            singerName: '猫头罐与六便士'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Av1WXaORMVx9yC-Y1LRKIg==/109951163399962868.jpg?param=140y140',
-            player: '34169',
-            imgDescription: '梦幻流行 | 庄生梦蝶，噪音也迷人',
-            singerName: 'AirRadio空气赫兹'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/_3jkl_Hmqr2zi0UoO6ekbg==/109951163400283899.jpg?param=140y140',
-            player: '59122',
-            imgDescription: '没音乐会死星人的日常',
-            singerName: '六个翅膀的小粉'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/oRr1GGfQCnlpj8R3e2haSA==/109951163401451378.jpg?param=140y140',
-            player: '25165',
-            imgDescription: '【提琴电音】自悠扬起，余韵无穷',
-            singerName: '谐星七十六号'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/dNMp_W_H1zefIOcVZ3yWKw==/19000660440208767.jpg?param=140y140',
-            player: '29580',
-            imgDescription: '日系纯音 / 与你在樱花树下的誓言',
-            singerName: 'Solitudeheart'
-          },
-          // 第七组
-          {
-            imgUrl: 'http://p1.music.126.net/GQNAdcJpe95voMbMQnyn5g==/19139198905314433.jpg?param=140y140',
-            player: '69790',
-            imgDescription: '岁月留声｜港乐里的王家卫式情话',
-            singerName: '猫头罐与六便士'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Av1WXaORMVx9yC-Y1LRKIg==/109951163399962868.jpg?param=140y140',
-            player: '34169',
-            imgDescription: '梦幻流行 | 庄生梦蝶，噪音也迷人',
-            singerName: 'AirRadio空气赫兹'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/_3jkl_Hmqr2zi0UoO6ekbg==/109951163400283899.jpg?param=140y140',
-            player: '59122',
-            imgDescription: '没音乐会死星人的日常',
-            singerName: '六个翅膀的小粉'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/oRr1GGfQCnlpj8R3e2haSA==/109951163401451378.jpg?param=140y140',
-            player: '25165',
-            imgDescription: '【提琴电音】自悠扬起，余韵无穷',
-            singerName: '谐星七十六号'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/dNMp_W_H1zefIOcVZ3yWKw==/19000660440208767.jpg?param=140y140',
-            player: '29580',
-            imgDescription: '日系纯音 / 与你在樱花树下的誓言',
-            singerName: 'Solitudeheart'
-          },
-          /*,
-          {
-            imgUrl: '',
-            player: '',
-            imgDescription: '',
-            singerName: ''
-          }*/
-        ]
-      } else if(currentPage == 2){
-        this.songListData = [
-          //第一组
-          {
-            imgUrl: 'http://p1.music.126.net/tys4PiLbkIBsWl1fRSi-ug==/109951163389897774.jpg?param=140y140',
-            player: '19万',
-            imgDescription: '都散了吧！故事始末注定没有我和你',
-            singerName: '友Xyi'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/DGka2Wu_5PSaqLyKaQT7ww==/18988565812043578.jpg?param=140y140',
-            player: '45万',
-            imgDescription: '这位同学 打扰一下，有个恋爱想和你谈谈',
-            singerName: '不安定的滑稽'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/gstmWooDYD73CQdx3HgMcA==/109951163393158141.jpg?param=140y140',
-            player: '181万',
-            imgDescription: '我们所怀念的，都是记忆里的自己而已',
-            singerName: '黑板抱'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Ik_2ud_6tUtfLi94LtupSQ==/109951163390002383.jpg?param=140y140',
-            player: '180万',
-            imgDescription: '暗恋始终是一个人的流离失所',
-            singerName: '-情殇雨夜-'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VVHU6FzAisT1JAtlPdwdCQ==/18738976674416019.jpg?param=140y140',
-            player: '24万',
-            imgDescription: '最新神曲合集，这个夏天就靠它们过了！',
-            singerName: '卿公子的字'
-          },
-          //第二组
-          {
-            imgUrl: 'http://p1.music.126.net/tys4PiLbkIBsWl1fRSi-ug==/109951163389897774.jpg?param=140y140',
-            player: '19万',
-            imgDescription: '都散了吧！故事始末注定没有我和你',
-            singerName: '友Xyi'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/DGka2Wu_5PSaqLyKaQT7ww==/18988565812043578.jpg?param=140y140',
-            player: '45万',
-            imgDescription: '这位同学 打扰一下，有个恋爱想和你谈谈',
-            singerName: '不安定的滑稽'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/gstmWooDYD73CQdx3HgMcA==/109951163393158141.jpg?param=140y140',
-            player: '181万',
-            imgDescription: '我们所怀念的，都是记忆里的自己而已',
-            singerName: '黑板抱'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Ik_2ud_6tUtfLi94LtupSQ==/109951163390002383.jpg?param=140y140',
-            player: '180万',
-            imgDescription: '暗恋始终是一个人的流离失所',
-            singerName: '-情殇雨夜-'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VVHU6FzAisT1JAtlPdwdCQ==/18738976674416019.jpg?param=140y140',
-            player: '24万',
-            imgDescription: '最新神曲合集，这个夏天就靠它们过了！',
-            singerName: '卿公子的字'
-          },
-          //第三组
-          {
-            imgUrl: 'http://p1.music.126.net/tys4PiLbkIBsWl1fRSi-ug==/109951163389897774.jpg?param=140y140',
-            player: '19万',
-            imgDescription: '都散了吧！故事始末注定没有我和你',
-            singerName: '友Xyi'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/DGka2Wu_5PSaqLyKaQT7ww==/18988565812043578.jpg?param=140y140',
-            player: '45万',
-            imgDescription: '这位同学 打扰一下，有个恋爱想和你谈谈',
-            singerName: '不安定的滑稽'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/gstmWooDYD73CQdx3HgMcA==/109951163393158141.jpg?param=140y140',
-            player: '181万',
-            imgDescription: '我们所怀念的，都是记忆里的自己而已',
-            singerName: '黑板抱'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Ik_2ud_6tUtfLi94LtupSQ==/109951163390002383.jpg?param=140y140',
-            player: '180万',
-            imgDescription: '暗恋始终是一个人的流离失所',
-            singerName: '-情殇雨夜-'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VVHU6FzAisT1JAtlPdwdCQ==/18738976674416019.jpg?param=140y140',
-            player: '24万',
-            imgDescription: '最新神曲合集，这个夏天就靠它们过了！',
-            singerName: '卿公子的字'
-          },
-          //第四组
-          {
-            imgUrl: 'http://p1.music.126.net/tys4PiLbkIBsWl1fRSi-ug==/109951163389897774.jpg?param=140y140',
-            player: '19万',
-            imgDescription: '都散了吧！故事始末注定没有我和你',
-            singerName: '友Xyi'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/DGka2Wu_5PSaqLyKaQT7ww==/18988565812043578.jpg?param=140y140',
-            player: '45万',
-            imgDescription: '这位同学 打扰一下，有个恋爱想和你谈谈',
-            singerName: '不安定的滑稽'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/gstmWooDYD73CQdx3HgMcA==/109951163393158141.jpg?param=140y140',
-            player: '181万',
-            imgDescription: '我们所怀念的，都是记忆里的自己而已',
-            singerName: '黑板抱'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Ik_2ud_6tUtfLi94LtupSQ==/109951163390002383.jpg?param=140y140',
-            player: '180万',
-            imgDescription: '暗恋始终是一个人的流离失所',
-            singerName: '-情殇雨夜-'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VVHU6FzAisT1JAtlPdwdCQ==/18738976674416019.jpg?param=140y140',
-            player: '24万',
-            imgDescription: '最新神曲合集，这个夏天就靠它们过了！',
-            singerName: '卿公子的字'
-          },
-          //第五组
-          {
-            imgUrl: 'http://p1.music.126.net/tys4PiLbkIBsWl1fRSi-ug==/109951163389897774.jpg?param=140y140',
-            player: '19万',
-            imgDescription: '都散了吧！故事始末注定没有我和你',
-            singerName: '友Xyi'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/DGka2Wu_5PSaqLyKaQT7ww==/18988565812043578.jpg?param=140y140',
-            player: '45万',
-            imgDescription: '这位同学 打扰一下，有个恋爱想和你谈谈',
-            singerName: '不安定的滑稽'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/gstmWooDYD73CQdx3HgMcA==/109951163393158141.jpg?param=140y140',
-            player: '181万',
-            imgDescription: '我们所怀念的，都是记忆里的自己而已',
-            singerName: '黑板抱'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Ik_2ud_6tUtfLi94LtupSQ==/109951163390002383.jpg?param=140y140',
-            player: '180万',
-            imgDescription: '暗恋始终是一个人的流离失所',
-            singerName: '-情殇雨夜-'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VVHU6FzAisT1JAtlPdwdCQ==/18738976674416019.jpg?param=140y140',
-            player: '24万',
-            imgDescription: '最新神曲合集，这个夏天就靠它们过了！',
-            singerName: '卿公子的字'
-          },
-          //第六组
-          {
-            imgUrl: 'http://p1.music.126.net/tys4PiLbkIBsWl1fRSi-ug==/109951163389897774.jpg?param=140y140',
-            player: '19万',
-            imgDescription: '都散了吧！故事始末注定没有我和你',
-            singerName: '友Xyi'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/DGka2Wu_5PSaqLyKaQT7ww==/18988565812043578.jpg?param=140y140',
-            player: '45万',
-            imgDescription: '这位同学 打扰一下，有个恋爱想和你谈谈',
-            singerName: '不安定的滑稽'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/gstmWooDYD73CQdx3HgMcA==/109951163393158141.jpg?param=140y140',
-            player: '181万',
-            imgDescription: '我们所怀念的，都是记忆里的自己而已',
-            singerName: '黑板抱'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Ik_2ud_6tUtfLi94LtupSQ==/109951163390002383.jpg?param=140y140',
-            player: '180万',
-            imgDescription: '暗恋始终是一个人的流离失所',
-            singerName: '-情殇雨夜-'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VVHU6FzAisT1JAtlPdwdCQ==/18738976674416019.jpg?param=140y140',
-            player: '24万',
-            imgDescription: '最新神曲合集，这个夏天就靠它们过了！',
-            singerName: '卿公子的字'
-          },
-          //第七组
-          {
-            imgUrl: 'http://p1.music.126.net/tys4PiLbkIBsWl1fRSi-ug==/109951163389897774.jpg?param=140y140',
-            player: '19万',
-            imgDescription: '都散了吧！故事始末注定没有我和你',
-            singerName: '友Xyi'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/DGka2Wu_5PSaqLyKaQT7ww==/18988565812043578.jpg?param=140y140',
-            player: '45万',
-            imgDescription: '这位同学 打扰一下，有个恋爱想和你谈谈',
-            singerName: '不安定的滑稽'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/gstmWooDYD73CQdx3HgMcA==/109951163393158141.jpg?param=140y140',
-            player: '181万',
-            imgDescription: '我们所怀念的，都是记忆里的自己而已',
-            singerName: '黑板抱'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/Ik_2ud_6tUtfLi94LtupSQ==/109951163390002383.jpg?param=140y140',
-            player: '180万',
-            imgDescription: '暗恋始终是一个人的流离失所',
-            singerName: '-情殇雨夜-'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VVHU6FzAisT1JAtlPdwdCQ==/18738976674416019.jpg?param=140y140',
-            player: '24万',
-            imgDescription: '最新神曲合集，这个夏天就靠它们过了！',
-            singerName: '卿公子的字'
-          },
 
-          /*{
-            imgUrl: '',
-            player: '',
-            imgDescription: '',
-            singerName: ''
-          },*/
-        ]
-      }else if(currentPage == 3){
-        this.songListData = [
-          // 第一组
-          {
-            imgUrl: 'http://p1.music.126.net/P5nEwTSKXqDxbHzYSqADow==/109951163381912807.jpg?param=140y140',
-            player: '89954',
-            imgDescription: '韩式小众女声，慢热的人最长情',
-            singerName: '时光如水你好'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/-GU6rDGfut2k9PZUsNfz0Q==/109951163395653143.jpg?param=140y140',
-            player: '71万',
-            imgDescription: '心碎日语| 好想触碰你，好想见到你',
-            singerName: '莉犬'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/sxt9hGs8-g4ASnZxsgUsew==/19128203789020861.jpg?param=140y140',
-            player: '206万',
-            imgDescription: '听了几个故事，正好讲给你玩',
-            singerName: '佯佯得意'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VFW7oMXZkPzwQtNmvnjUAg==/19212866184371108.jpg?param=140y140',
-            player: '37万',
-            imgDescription: '日语丨水风空落眼前花',
-            singerName: '咩咩稀饭你'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/TLL-xfjw81s6PbDPPqZ2LA==/19211766672751955.jpg?param=140y140',
-            player: '160万',
-            imgDescription: '华语情歌｜一个字就戳中泪点的情话',
-            singerName: '猫头罐与六便士'
-          },
-          // 第二组
-          {
-            imgUrl: 'http://p1.music.126.net/P5nEwTSKXqDxbHzYSqADow==/109951163381912807.jpg?param=140y140',
-            player: '89954',
-            imgDescription: '韩式小众女声，慢热的人最长情',
-            singerName: '时光如水你好'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/-GU6rDGfut2k9PZUsNfz0Q==/109951163395653143.jpg?param=140y140',
-            player: '71万',
-            imgDescription: '心碎日语| 好想触碰你，好想见到你',
-            singerName: '莉犬'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/sxt9hGs8-g4ASnZxsgUsew==/19128203789020861.jpg?param=140y140',
-            player: '206万',
-            imgDescription: '听了几个故事，正好讲给你玩',
-            singerName: '佯佯得意'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VFW7oMXZkPzwQtNmvnjUAg==/19212866184371108.jpg?param=140y140',
-            player: '37万',
-            imgDescription: '日语丨水风空落眼前花',
-            singerName: '咩咩稀饭你'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/TLL-xfjw81s6PbDPPqZ2LA==/19211766672751955.jpg?param=140y140',
-            player: '160万',
-            imgDescription: '华语情歌｜一个字就戳中泪点的情话',
-            singerName: '猫头罐与六便士'
-          },
-          // 第三组
-          {
-            imgUrl: 'http://p1.music.126.net/P5nEwTSKXqDxbHzYSqADow==/109951163381912807.jpg?param=140y140',
-            player: '89954',
-            imgDescription: '韩式小众女声，慢热的人最长情',
-            singerName: '时光如水你好'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/-GU6rDGfut2k9PZUsNfz0Q==/109951163395653143.jpg?param=140y140',
-            player: '71万',
-            imgDescription: '心碎日语| 好想触碰你，好想见到你',
-            singerName: '莉犬'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/sxt9hGs8-g4ASnZxsgUsew==/19128203789020861.jpg?param=140y140',
-            player: '206万',
-            imgDescription: '听了几个故事，正好讲给你玩',
-            singerName: '佯佯得意'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VFW7oMXZkPzwQtNmvnjUAg==/19212866184371108.jpg?param=140y140',
-            player: '37万',
-            imgDescription: '日语丨水风空落眼前花',
-            singerName: '咩咩稀饭你'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/TLL-xfjw81s6PbDPPqZ2LA==/19211766672751955.jpg?param=140y140',
-            player: '160万',
-            imgDescription: '华语情歌｜一个字就戳中泪点的情话',
-            singerName: '猫头罐与六便士'
-          },
-          // 第四组
-          {
-            imgUrl: 'http://p1.music.126.net/P5nEwTSKXqDxbHzYSqADow==/109951163381912807.jpg?param=140y140',
-            player: '89954',
-            imgDescription: '韩式小众女声，慢热的人最长情',
-            singerName: '时光如水你好'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/-GU6rDGfut2k9PZUsNfz0Q==/109951163395653143.jpg?param=140y140',
-            player: '71万',
-            imgDescription: '心碎日语| 好想触碰你，好想见到你',
-            singerName: '莉犬'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/sxt9hGs8-g4ASnZxsgUsew==/19128203789020861.jpg?param=140y140',
-            player: '206万',
-            imgDescription: '听了几个故事，正好讲给你玩',
-            singerName: '佯佯得意'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VFW7oMXZkPzwQtNmvnjUAg==/19212866184371108.jpg?param=140y140',
-            player: '37万',
-            imgDescription: '日语丨水风空落眼前花',
-            singerName: '咩咩稀饭你'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/TLL-xfjw81s6PbDPPqZ2LA==/19211766672751955.jpg?param=140y140',
-            player: '160万',
-            imgDescription: '华语情歌｜一个字就戳中泪点的情话',
-            singerName: '猫头罐与六便士'
-          },
-          // 第五组
-          {
-            imgUrl: 'http://p1.music.126.net/P5nEwTSKXqDxbHzYSqADow==/109951163381912807.jpg?param=140y140',
-            player: '89954',
-            imgDescription: '韩式小众女声，慢热的人最长情',
-            singerName: '时光如水你好'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/-GU6rDGfut2k9PZUsNfz0Q==/109951163395653143.jpg?param=140y140',
-            player: '71万',
-            imgDescription: '心碎日语| 好想触碰你，好想见到你',
-            singerName: '莉犬'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/sxt9hGs8-g4ASnZxsgUsew==/19128203789020861.jpg?param=140y140',
-            player: '206万',
-            imgDescription: '听了几个故事，正好讲给你玩',
-            singerName: '佯佯得意'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VFW7oMXZkPzwQtNmvnjUAg==/19212866184371108.jpg?param=140y140',
-            player: '37万',
-            imgDescription: '日语丨水风空落眼前花',
-            singerName: '咩咩稀饭你'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/TLL-xfjw81s6PbDPPqZ2LA==/19211766672751955.jpg?param=140y140',
-            player: '160万',
-            imgDescription: '华语情歌｜一个字就戳中泪点的情话',
-            singerName: '猫头罐与六便士'
-          },
-          // 第六组
-          {
-            imgUrl: 'http://p1.music.126.net/P5nEwTSKXqDxbHzYSqADow==/109951163381912807.jpg?param=140y140',
-            player: '89954',
-            imgDescription: '韩式小众女声，慢热的人最长情',
-            singerName: '时光如水你好'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/-GU6rDGfut2k9PZUsNfz0Q==/109951163395653143.jpg?param=140y140',
-            player: '71万',
-            imgDescription: '心碎日语| 好想触碰你，好想见到你',
-            singerName: '莉犬'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/sxt9hGs8-g4ASnZxsgUsew==/19128203789020861.jpg?param=140y140',
-            player: '206万',
-            imgDescription: '听了几个故事，正好讲给你玩',
-            singerName: '佯佯得意'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VFW7oMXZkPzwQtNmvnjUAg==/19212866184371108.jpg?param=140y140',
-            player: '37万',
-            imgDescription: '日语丨水风空落眼前花',
-            singerName: '咩咩稀饭你'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/TLL-xfjw81s6PbDPPqZ2LA==/19211766672751955.jpg?param=140y140',
-            player: '160万',
-            imgDescription: '华语情歌｜一个字就戳中泪点的情话',
-            singerName: '猫头罐与六便士'
-          },
-          // 第七组
-          {
-            imgUrl: 'http://p1.music.126.net/P5nEwTSKXqDxbHzYSqADow==/109951163381912807.jpg?param=140y140',
-            player: '89954',
-            imgDescription: '韩式小众女声，慢热的人最长情',
-            singerName: '时光如水你好'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/-GU6rDGfut2k9PZUsNfz0Q==/109951163395653143.jpg?param=140y140',
-            player: '71万',
-            imgDescription: '心碎日语| 好想触碰你，好想见到你',
-            singerName: '莉犬'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/sxt9hGs8-g4ASnZxsgUsew==/19128203789020861.jpg?param=140y140',
-            player: '206万',
-            imgDescription: '听了几个故事，正好讲给你玩',
-            singerName: '佯佯得意'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/VFW7oMXZkPzwQtNmvnjUAg==/19212866184371108.jpg?param=140y140',
-            player: '37万',
-            imgDescription: '日语丨水风空落眼前花',
-            singerName: '咩咩稀饭你'
-          },
-          {
-            imgUrl: 'http://p1.music.126.net/TLL-xfjw81s6PbDPPqZ2LA==/19211766672751955.jpg?param=140y140',
-            player: '160万',
-            imgDescription: '华语情歌｜一个字就戳中泪点的情话',
-            singerName: '猫头罐与六便士'
-          },
-          /*{
-            imgUrl: '',
-            player: '',
-            imgDescription: '',
-            singerName: ''
-          },*/
-        ]
+    // 显示模态框
+    showOperateModal(songInfo){
+      console.log(songInfo);
+      this.selectedSongInfo = songInfo;
+      this.isShowOperateModal = 1;
+    },
+    //确定添加
+    confirmModal(){
+      this.addUserHaveSong(this.selectedSongInfo.id);
+    },
+    // 添加音乐到我的音乐中 xMusicAddUserHaveSongs
+    addUserHaveSong(currentSongId){
+      let _this = this;
+      _this.$axios.post(_this.$interface.xMusicAddUserHaveSongs, {userId: 1, songId: currentSongId})
+        .then(function(responseData){
+          if(responseData.data.status == 1){
+            _this.closeModal();
+            alert(responseData.data.message)
+          }else { //表示当前歌曲已经存在了
+            _this.closeModal();
+            alert('当前歌曲已在我的音乐中!')
+          }
+        })
+        .catch(function (err) {
+          console.log(err);
+        })
+    },
+    // 鼠标放到tr上
+    mouseOverTr(index){
+      this.isShowAddCurrentArea = index;
+    },
+
+    mouseOutTr(){
+      this.isShowAddCurrentArea = -1;
+    },
+
+    // 切换全部的歌曲
+    toggleAllSongs(){
+      this.singerTitle = '全部';
+
+      this.isSelectedAll = 1;
+      //初始化
+      this.paginationPost.index = 1;
+      this.playIndex = -1;
+      this.isSelectedSinger = -1;
+
+      this.getAllSongs();
+    },
+    // 切换歌手
+    toggleSinger(index, singerInfo){
+      //初始化
+      this.isSelectedAll = 0;
+      this.singerSongsPost.index = 1;
+
+      this.isSelectedSinger = index;
+      this.singerSongsPost.singerId = singerInfo.singerId;
+      this.singerTitle = singerInfo.singerName;
+      this.getCurrentSingerSongs();
+    },
+    // 获取到指定歌手
+    getCurrentSingerSongs(){
+      var _this = this;
+      _this.$axios.get(_this.$interface.xMusicQueryHaveSongsToSinger+'?singerId='+_this.singerSongsPost.singerId+'&pageIndex='+_this.singerSongsPost.index+'&pageSize='+_this.singerSongsPost.size).then(function(responseData){
+        console.log(responseData);
+        _this.songListData = responseData.data.data;
+        _this.songPaginationInfoSection = responseData.data;
+        if(responseData.data.status == 1){
+          let length = _this.songListData.length;
+          for(let i = 0; i < length; i++){
+            let singleSong = _this.songListData[i];
+            filterMusicTime(singleSong.songUrl, function(time){
+              let songIndex = i;
+              _this.recordNumber +=1;
+              _this.songListData[songIndex].duration = time;
+
+              if(_this.recordNumber == length){ //保证切换页码时 歌曲时间能够刷新出来。
+                _this.recordNumber = 0;
+                _this.songListData = [..._this.songListData];
+              }
+            });
+          }
+        }else {
+          console.log(responseData.data.message);
+        }
+      })
+        .catch(function(err){
+          console.log(err);
+        })
+    },
+    // 切换播放的歌曲
+    togglePlaySong(index, songInfo){
+      this.playIndex = index;
+      this.recordPlaySongPosition.pageIndex = this.paginationPost.index;
+      this.recordPlaySongPosition.songIndex = index;
+      this.$store.commit('updateSongInfo', songInfo);
+    },
+    // 获取到歌手
+    getAllSingers(){
+      let _this = this;
+      _this.$axios.get(_this.$interface.xMusicQueryAllSingers+'?pageIndex=1&pageSize=100000').then(function(responseData){
+        console.log(responseData);
+
+        if(responseData.data.status == 1){
+          _this.singerListData = responseData.data.data;
+        }else {
+          console.log(responseData.data.message);
+        }
+      })
+        .catch(function (err) {
+          console.log(err);
+        })
+    },
+    // 获取到整个音乐库的歌曲
+    getAllSongs(){
+      let _this = this;
+      _this.$axios.get(_this.$interface.xMusicQueryAllSongs+'?pageIndex='+_this.paginationPost.index+'&pageSize='+_this.paginationPost.size+'').then(function(responseData){
+        console.log(responseData);
+        _this.songPaginationInfoAll = responseData.data;
+        _this.songListData = responseData.data.data;
+        if(responseData.data.status == 1){
+          let length = _this.songListData.length;
+          for(let i = 0; i < length; i++){
+            let singleSong = _this.songListData[i];
+            filterMusicTime(singleSong.songUrl, function(time){
+              let songIndex = i;
+              _this.recordNumber +=1;
+              _this.songListData[songIndex].duration = time;
+
+              if(_this.recordNumber == length){ //保证切换页码时 歌曲时间能够刷新出来。
+                _this.recordNumber = 0;
+                _this.songListData = [..._this.songListData];
+              }
+            });
+          }
+        }else {
+          console.log(responseData.data.message);
+        }
+
+
+      })
+        .catch(function(err){
+          console.log(err);
+        })
+    },
+    // 切换箭头的状态
+    toggleArrow(){
+      this.arrowStatus = !this.arrowStatus;
+      if(this.arrowStatus){
+        $('.singer-list').show(500)
+      }else {
+        $('.singer-list').hide(500)
+      }
+    },
+    // 分页处理。
+    pagechange(pageNumber){
+      if( this.isSelectedAll){
+        this.paginationPost.index = pageNumber;
+        this.getAllSongs();
+
+      }else {
+        this.singerSongsPost.index = pageNumber;
+        this.getCurrentSingerSongs();
       }
 
+      this.playIndex = -1;
+    //  处理正在播放的音乐在切换页码之后的播放回显。
+      if(pageNumber == this.recordPlaySongPosition.pageIndex){
+        this.playIndex = this.recordPlaySongPosition.songIndex;
+      }
     },
-    pagechange(pageNumber){
-      this.pageNumber = pageNumber;
-      this.getSongListData(pageNumber);
-    }
+    closeModal(){
+      this.isShowOperateModal = 0;
+    },
   },
   components:{
     pagination,
@@ -750,133 +306,316 @@ export default {
 </script>
 
 <style scoped>
+  /*通用性*/
+
+.arrowRotateOpen {
+  transition: all .5s linear;
+  transform: rotate(180deg);
+}
+.arrowRotateClose {
+  transition: all .5s linear;
+  transform: rotate(90deg);
+}
 #song-sheet {
   background: #f5f5f5;
 }
 #song-sheet .song-sheet-wrap {
-  width: 900px;
-  /*min-height: 780px;*/
-  padding: 40px;
+  width: 1164px;
   margin: 0 auto;
   background: #fff;
   border-left: 1px solid #d3d3d3;
   border-right: 1px solid #d3d3d3;
+  position: relative;
 }
-/*头部部分*/
-.song-sheet-wrap .song-sheet-wrap-header {
-  height: 40px;
-  border-bottom: 2px solid #c20c0c;
-}
-.song-sheet-wrap-header .sswrap-header-h3 {
+/*歌手分类列表*/
+.song-sheet-wrap .singer-sort-list {
+  width: 240px;
   float: left;
-  font-size: 24px;
+  position: absolute;
+  padding: 40px 0;
 }
-.song-sheet-wrap-header .sswrap-header-div {
-  float: right;
+
+/*全部*/
+.singer-sort-list .all-songs {
+  height: 38px;
+  font-size: 16px;
+  color: #000;
+  font-weight: 700;
+  line-height: 38px;
+  padding: 0 0 0 34px;
+  cursor: pointer;
+  border-top: 1px solid #ccc;
 }
-.sswrap-header-div .sswrap-header-div-aone {
-  float: left;
-  width: 46px;
-  height: 29px;
-  line-height: 29px;
-  text-align: center;
-  font-size: 12px;
-  background: #c20c0c;
-  color: #fff;
-  border-radius: 4px;
+.singer-sort-list .all-songs:hover {
+  background: #eee;
 }
-.sswrap-header-div .sswrap-header-div-atwo {
-  float: left;
-  width: 46px;
-  height: 29px;
-  line-height: 29px;
-  text-align: center;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #333;
-  background: #f5f5f5;
+
+/*分类歌曲*/
+.singer-sort-list .other-singer-song {
+  height: 38px;
+  font-size: 16px;
+  color: #000;
+  font-weight: 700;
+  line-height: 38px;
+  padding: 0 0 0 6px;
+  cursor: pointer;
 }
-.sswrap-header-div .sswrap-header-div-aone:hover,
-.sswrap-header-div .sswrap-header-div-atwo:hover {
-  text-decoration: underline;
+/*箭头*/
+.other-singer-song .song-arrow {
+  display: inline-block;
+}
+
+/*歌手列表*/
+.singer-sort-list .singer-list {
+
+}
+
+/*指定歌手*/
+.singer-list .singer-item {
+  height: 34px;
+  font-size: 14px;
+  color: #000;
+  line-height: 34px;
+  cursor: pointer;
+  padding: 0 0 0 34px;
+}
+.singer-list .singer-item:hover {
+  background: #eee;
 }
 /*内容部分*/
 .song-sheet-wrap .song-sheet-wrap-content {
-  margin: 30px 0 0 0px;
-}
-.song-sheet-wrap-content .sswrap-content-image-part {
+  width: 924px;
+  margin: 0 0 0 240px;
+  padding: 40px 0 0 0;
+  height: 100%;
+  box-sizing: border-box;
+  border-left:1px solid #d3d3d3;
   position: relative;
 }
-.sswrap-content-list .sswrap-content-play {
-  height: 27px;
-  width: 100%;
-  position: absolute;
-  bottom: 4px;
+
+/*歌曲列表头部*/
+.song-sheet-wrap-content .song-sheet-header {
+  height: 33px;
+  padding: 0 10px 0 7px;
+  border-bottom: 2px solid #C10D0C;
+  margin:0 0 10px 10px;
 }
-.song-sheet-wrap-content .sswrap-content-list {
-  float: left;
+.song-sheet-header .song-sheet-header-icon {
   display: inline-block;
-  width: 140px;
-  height: 188px;
-  padding: 0 30px 30px 10px;
+  height: 15px;
+  width: 15px;
+  background: url('../../../../assets/images/index.png') -235px -164px no-repeat;
 }
-.sswrap-content-list .sswrap-content-image-mask {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: url('./../../../../assets/images/coverall.png') 0 0 no-repeat;
-}
-.sswrap-content-play .sswrap-content-headset-icon {
-  float: left;
-  display: inline-block;
-  width: 14px;
-  height: 11px;
-  background: url('./../../../../assets/images/iconall.png') 0 -24px no-repeat;
-  margin: 9px 5px 9px 10px;
-}
-.sswrap-content-play .sswrap-content-play-number {
-  float: left;
-  margin: 7px 0 0 0;
-  color: #ccc;
-}
-.sswrap-content-play .sswrap-content-play-button {
-  display: inline-block;
-  float: right;
-  width: 16px;
-  height: 17px;
-  background: url('./../../../../assets/images/iconall.png') 0 0 no-repeat;
-  margin: 5px 10px 0 0;
-}
-.sswrap-content-play .sswrap-content-play-button:hover {
-  background-position: 0 -60px;
-}
-.sswrap-content-list .sswrap-content-image-description {
-  margin: 8px 0 3px;
-  font-size: 14px;
+/*头部-歌手名称*/
+.song-sheet-header .song-sheet-singer-name {
   color: #000;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  word-wrap: normal;
+  font-size: 24px;
+  font-weight: 700;
+  margin:0 0 0 7px;
 }
-.sswrap-content-list .sswrap-content-image-description:hover {
-  text-decoration: underline;
-}
-.sswrap-content-list .sswrap-content-by {
-  font-size: 12px;
-  color: #999;
-}
-.sswrap-content-list .sswrap-content-songer {
-  width: 100px;
-  font-size: 12px;
+/*头部-歌曲数目*/
+.song-sheet-header .have-song-number {
   color: #666;
+  font-size: 14px;
+  margin: 0 0 0 7px;
 }
-.sswrap-content-list .sswrap-content-songer:hover {
-  text-decoration: underline;
+.song-sheet-wrap-content .sswrap-content-ul {
+  height: 562px;
+  padding: 0 10px 0 10px;
+  border-bottom: 2px solid #d3d3d3;
 }
+
+/*操作音乐部分*/
+  .sswrap-content-ul table tr .add-song-add {
+    position: relative;
+  }
+  .sswrap-content-ul table tr .add-song-add .operate-song{
+    width: 100%;
+    height: 100%;
+    background: #eee;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .sswrap-content-ul table tr .add-song-add .operate-song-add {
+    display: inline-block;
+    width: 17px;
+    height: 14px;
+    background: url('../../../../assets/images/table.png') 0 -174px no-repeat;
+    margin: 13px 0 0 12px;
+    cursor: pointer;
+  }
+  .sswrap-content-ul table tr .add-song-add .operate-song-add:hover {
+    background: url('../../../../assets/images/table.png') -20px -174px no-repeat;
+  }
+
+.sswrap-content-ul table {
+  width: 100%;
+  table-layout:fixed;
+  border-collapse: separate;
+}
+
+table tr {
+
+}
+.sswrap-content-ul table tr th{
+  border: 1px solid #d3d3d3;
+  color: #666;
+  font-size: 14px;
+}
+
+.sswrap-content-ul table tr td .operate-song-button {
+  display: inline-block;
+  cursor: pointer;
+  width: 17px;
+  height: 17px;
+  background: url('../../../../assets/images/table.png') 0 -103px no-repeat;
+}
+  .sswrap-content-ul table tr td .operate-song-button:hover {
+    background: url('../../../../assets/images/table.png') 0 -128px no-repeat;
+  }
+/*表格头部的第一个和第二个单元格处理*/
+table tr th:nth-child(1),
+table tr th:nth-child(2){
+  width: 42px;
+  text-align: center;
+}
+/*其他行的第一个和第二个单元格处理*/
+table tr td:nth-child(1),
+table tr td:nth-child(2){
+  width: 42px;
+  text-align: center;
+}
+table tr th {
+  padding: 10px 7px;
+  text-align: left;
+}
+table tr td{
+  padding: 10px 7px;
+}
+
+table tr:nth-child(2n) {
+  background: #eee;
+}
+/* 第一行 第一个头部单元格*/
+.sswrap-content-ul table tr:first-child th:first-child {
+  /*左上*/
+  border-top-left-radius: 12px;
+}
+/*第一行 最后一个头部单元格*/
+.sswrap-content-ul table tr:first-child th:last-child{
+  /*右上*/
+  border-top-right-radius: 12px;
+}
+/*最后一行 第一个单元格*/
+.sswrap-content-ul table tr:last-child td:first-child {
+  /*左下*/
+  border-bottom-left-radius: 12px;
+}
+/*最后一行 最后一个单元格*/
+.sswrap-content-ul table tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+
+/*分页插件*/
 .song-sheet-wrap .pagination-nav {
   text-align: center;
 }
+
+  /*播放器部分*/
+  .net-cloud-music-footer {
+    height: 133px;
+    background: #fff;
+    border-top: 1px solid #d3d3d3;
+  }
+
+  /*模态框部分*/
+  #song-sheet .confirm-modal {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    background: rgba(255, 255, 255, 0);
+
+  }
+  /*模态框包裹*/
+  .confirm-modal .confirm-modal-wrap {
+    width: 480px;
+    height: 230px;
+    background: #fff;
+    margin: 260px auto 0;
+    border-radius: 4px;
+    box-shadow: 0px 0px 24px 1px #ccc;
+  }
+  /*头部*/
+  .confirm-modal-wrap .confirm-modal-header {
+    height: 38px;
+    line-height: 38px;
+    border-radius: 4px 4px 0 0;
+    background: #2d2d2d;
+    padding: 0 12px;
+  }
+
+  /*提示*/
+  .confirm-modal-header .operate-prompt {
+    float: left;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .confirm-modal-header .close-modal {
+    float: right;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /*提示框内容*/
+  .confirm-modal-wrap .operate-des-content {
+    width: 380px;
+    height: 150px;
+    margin: 40px auto 0;
+  }
+  .operate-des-content .operate-song-des {
+    text-align: center;
+    font-size: 14px;
+  }
+  .operate-des-content .operate-song-button {
+    width: 200px;
+    margin: 54px auto 0;
+  }
+  .operate-song-button .operate-song-confirm {
+    float: left;
+    padding:5px 24px;
+    outline: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #ccc;
+  }
+  .operate-song-button .operate-song-cancel {
+    float: right;
+    padding:5px 24px;
+    outline: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #ccc;
+  }
+  .operate-song-button .operate-song-cancel:hover {
+    background: #ddd;
+  }
+  .operate-song-button .operate-song-confirm:hover {
+    background: #ddd;
+  }
+
+.sswrap-content-ul table tr td .playButtonActive {
+  background: url('../../../../assets/images/table.png') 0 -128px no-repeat;
+}
+  .singer-list .selectedSingerActive {
+    background: #eee;
+  }
 </style>

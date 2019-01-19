@@ -5,14 +5,15 @@
         <div id="header-top-wrap" class="clearFix">
           <div id="header-logo" class="fl">
             <i class="logo-icon"></i>
-            <router-link to="/netCloudMusic">Ann云音乐</router-link>
+            <a @click="backIndex">Ann云音乐</a>
           </div>
 
           <ul class="fl clearFix">
-            <li class="fl" v-bind:class="{navClickedBg: isShowFM, navRecoveryDefault: isRecoveryFM}"><router-link class="router-link" to="/findMusic" @click.native="toggleNetCloudNav(findMusic)">发现音乐</router-link><i v-bind:class="{redArrow: isShowFM}"></i></li>
-            <li class="fl" v-bind:class="{navClickedBg: isShowMM, navRecoveryDefault: isRecoveryMM}"><router-link class="router-link" to="/myMusic" @click.native="toggleNetCloudNav(myMusic)">我的音乐</router-link><i v-bind:class="{redArrow: isShowMM}"></i></li>
-            <li class="fl" v-bind:class="{navClickedBg: isShowSP, navRecoveryDefault: isRecoverySP}"><router-link class="router-link" to="/musician" @click.native="toggleNetCloudNav(musician)">音乐人</router-link><i v-bind:class="{redArrow: isShowSP}"></i></li>
-            <li class="fl" v-bind:class="{navClickedBg: isShowDC, navRecoveryDefault: isRecoveryDC}"><router-link class="router-link" to="/downloadClient" @click.native="toggleNetCloudNav(downloadClient)">下载客户端</router-link><i class="hot"></i><i v-bind:class="{redArrow: isShowDC}"></i></li>
+            <li class="fl" v-bind:class="{navClickedBg: navIndex == 0}"><router-link class="router-link" to="/myMusicIndex" @click.native="toggleNetCloudNav(0)">我的首页</router-link><i v-bind:class="{redArrow: navIndex == 0}"></i></li>
+            <li class="fl" v-bind:class="{navClickedBg: navIndex == 1}"><router-link class="router-link" to="/findMusic" @click.native="toggleNetCloudNav(1)">音乐库</router-link><i v-bind:class="{redArrow: navIndex == 1}"></i></li>
+            <li class="fl" v-bind:class="{navClickedBg: navIndex == 2}"><router-link class="router-link" to="/myMusic" @click.native="toggleNetCloudNav(2)">我的音乐</router-link><i v-bind:class="{redArrow: navIndex == 2}"></i></li>
+            <li class="fl" v-bind:class="{navClickedBg: navIndex == 3}"><router-link class="router-link" to="/musician" @click.native="toggleNetCloudNav(3)">音乐人</router-link><i v-bind:class="{redArrow: navIndex == 3}"></i></li>
+            <li class="fl" v-bind:class="{navClickedBg: navIndex == 4}"><router-link class="router-link" to="/downloadClient" @click.native="toggleNetCloudNav(4)">下载客户端</router-link><i class="hot"></i><i v-bind:class="{redArrow: navIndex == 4}"></i></li>
           </ul>
 
         </div>
@@ -20,6 +21,7 @@
 
     </div>
     <IndexContent/>
+    <fixedPlayer></fixedPlayer>
   </div>
 
 </template>
@@ -27,26 +29,24 @@
 <script>
 import IndexContent from './IndexContent'
 import store from '../../vuex/store'
+import fixedPlayer from '../commons/fixedPlayer'
 export default {
   name: 'IndexHeader',
+  components: {
+    IndexContent,
+    fixedPlayer
+  },
   data () {
     return {
       store,
-      isShowFM: true,
-      isShowMM: false,
-      isShowSP: false,
-      isShowDC: false,
-      isRecoveryFM: false,
-      isRecoveryMM: true,
-      isRecoverySP: true,
-      isRecoveryDC: true,
-      findMusic: '发现音乐',
-      myMusic: '我的音乐',
-      musician: '音乐人',
-      downloadClient: '下载客户端',
-      showUserInfo: false,
-      hideUserInfo: true,
-      netCloudNavName: ''
+      /*
+      * 0-我的首页
+      * 1-发现音乐
+      * 2-我的音乐
+      * 3-音乐人
+      * 4-下载客户端
+      * */
+      navIndex: 0
     }
   },
   created(){
@@ -56,76 +56,32 @@ export default {
     /********************************************/
     //处理在刷新页面以后导航的默认选中的背景色处理逻辑
     let routeName = window.location.hash.slice(2);
-    if(routeName == 'recommend'){
-      this.netCloudNavName = '发现音乐'
+    if(routeName == "myMusicIndex"){
+      this.navIndex = 0;
+    } else if(routeName == 'songSheet'){
+      this.navIndex = 1;
     }else if(routeName == 'myMusic'){
-      this.netCloudNavName = '我的音乐'
+      this.navIndex = 2;
     }else if(routeName == 'musician') {
-      this.netCloudNavName = '音乐人'
+      this.navIndex = 3;
     }else if(routeName == 'downloadClient'){
-      this.netCloudNavName = '下载客户端'
+      this.navIndex = 4;
     }
-    this.toggleNetCloudNav(this.netCloudNavName);
+    this.toggleNetCloudNav(this.navIndex);
     /*********************************************/
   },
   methods: {
-    toggleNetCloudNavBgAndArrowHandle (netCloudNavNameFP, booleanArrow, booleanRecovery) {
-      /* 选中导航时箭头和背景色显示处理 */
-      this.isShowFM = false
-      this.isShowMM = false
-      this.isShowSP = false
-      this.isShowDC = false
-
-      /* 未选中的导航恢复默认的背景 */
-      this.isRecoveryFM = true
-      this.isRecoveryMM = true
-      this.isRecoverySP = true
-      this.isRecoveryDC = true
-
-      switch (netCloudNavNameFP) {
-        case '发现音乐':
-          this.isShowFM = booleanArrow
-          this.isRecoveryFM = booleanRecovery
-          break
-        case '我的音乐':
-          this.isShowMM = booleanArrow
-          this.isRecoveryMM = booleanRecovery
-          break
-        case '音乐人':
-          this.isShowSP = booleanArrow
-          this.isRecoverySP = booleanRecovery
-          break
-        case '下载客户端':
-          this.isShowDC = booleanArrow
-          this.isRecoveryDC = booleanRecovery
-          break
-      }
+    backIndex(){
+      this.$router.push({
+        path: '/myMusicIndex',
+        name: 'myMusicIndex'
+      })
+      this.navIndex = 0;
     },
-    toggleNetCloudNav (netCloudNavName) {
-      if (netCloudNavName === '发现音乐') {
-        this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
-      } else if (netCloudNavName === '我的音乐') {
-        this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
-      } else if (netCloudNavName === '音乐人') {
-        this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
-      } else if (netCloudNavName === '下载客户端') {
-        this.toggleNetCloudNavBgAndArrowHandle(netCloudNavName, true, false)
-      }
+    toggleNetCloudNav (index) {
+     this.navIndex = index;
     },
-    showUserInfoList () {
-      this.showUserInfo = true
-      this.hideUserInfo = false
-    },
-    hideUserInfoList () {
-      this.showUserInfo = false
-      this.hideUserInfo = true
-    }
-
-
   },
-  components: {
-    IndexContent
-  }
 }
 </script>
 
@@ -239,6 +195,7 @@ export default {
     width: 182px;
     height: 69px;
     margin-right: 30px;
+    cursor: pointer;
   }
   #header-logo .logo-icon{
     display: inline-block;
@@ -246,7 +203,6 @@ export default {
     width: 48px;
     height: 48px;
     margin: 12px 0 0 4px;
-    /*background: url('../../assets/images/Ann_cloud.png') no-repeat;*/
     background: url('../../assets/images/Ann_cloud_one.png') no-repeat;
   }
   #header-logo a {
@@ -257,7 +213,7 @@ export default {
     color: #fff;
     text-align: center;
     font-family: "Times New Roman", Times, serif;
-    /*font: 12px/1 Tahoma,Helvetica,Arial,"\5b8b\4f53",sans-serif;*/
+    /*font: 14px/1.5 'Microsoft YaHei',arial,tahoma,\5b8b\4f53,sans-serif;*/
     font-size: 24px;
     line-height: 69px;
   }
@@ -267,6 +223,9 @@ export default {
     line-height: 70px;
     height: 70px;
     position: relative;
+  }
+  #header-top-wrap ul li:hover a {
+    color: #fff;
   }
   /* 显示红色箭头 */
   #header-top-wrap ul li .redArrow{
@@ -281,7 +240,7 @@ export default {
   }
 
   /* 选择网易云导航后背景色 */
-  .navClickedBg {
+ .navClickedBg {
     background-color: #000;
     color: #fff;
   }

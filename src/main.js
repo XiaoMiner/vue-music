@@ -8,7 +8,8 @@ import Vuex from 'vuex'
 import store from './vuex/store'
 import BackTop from './directive/v-back-top'
 import axios from 'axios'
-
+import interfaceName from './js/interface'
+import filterMusicTime from './js/filterMusicTime'
 import token from './js/set_refresh_token';
 // import cookie from './js/set_refresh_cookie';
 import $ from 'jquery'
@@ -20,6 +21,9 @@ Vue.use(Vuex)
 Vue.prototype.$axios = axios;
 // 把md5绑定到vue实例的原型中,以便于全局使用。
 Vue.prototype.$md5 = md5;
+
+/// 把接口名称存放到vue实例中
+Vue.prototype.$interface = interfaceName;
 
 Vue.config.productionTip = false
 

@@ -1,8 +1,5 @@
 <template>
-  <div>
     <IndexHeader/>
-  </div>
-
 </template>
 
 <script>
