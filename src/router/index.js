@@ -77,12 +77,22 @@ var vueRouter = new Router({
 })
 
 //处理当前页面没有登录过本网站时的登录处理。
+// 每次切换路由时, 都要使用beforeEach()进行验证防护的一种。
 vueRouter.beforeEach(function(to, from, next){
-  console.log(to);
+  // to.matched => 得到一个数组
+  // to.matched.some some(callback) 回调函数中的参数为数组中的值, 表示数组中的值是否通过了回调函数的检测。
+  if(to.matched.some(item => item.meta.auth)){ // 表示通过了验证, 每次在切换时都要进行
+    if(!Number(sessionStorage.isLogin)){ // 处理的是否登录过。
+      next({path: '/login'});//表示重定向
+    }else {
+      next();
+    }
+  }else {
+    next();// 必须使用next()函数解析钩子
+  }
   /*if(to.path ==){
 
   }*/
-
   next();
 })
 export default vueRouter;

@@ -18,6 +18,10 @@
         <span class="song-sheet-singer-name">{{singerTitle}}</span>
         <span class="have-song-number" v-if="isSelectedAll == 1">{{songPaginationInfoAll.totalNumber}}首歌</span>
         <span class="have-song-number" v-if="isSelectedAll == 0">{{songPaginationInfoSection.totalNumber}}首歌</span>
+        <div class="search-input">
+          <input placeholder="按照音乐名称搜索 . . ." type="text" v-model="searchSongName">
+          <button @click="searchSong">搜索</button>
+        </div>
       </div>
       <div class="sswrap-content-ul">
         <table>
@@ -115,6 +119,9 @@ export default {
       isShowAddCurrentArea: -1,//是否显示当前歌曲的操作区域
       isShowOperateModal: 0,//是否显示操作模态框
       selectedSongInfo: {},//当对歌曲进行操作时,进行的保存歌曲信息。
+
+      // 条件查询
+      searchSongName: '', //根据音乐名称条件进行查询。
     }
   },
   mounted(){
@@ -240,7 +247,7 @@ export default {
     getAllSongs(){
       let _this = this;
       _this.$axios.get(_this.$interface.xMusicQueryAllSongs+'?pageIndex='+_this.paginationPost.index+'&pageSize='+_this.paginationPost.size+'').then(function(responseData){
-        console.log(responseData);
+        // console.log(responseData);
         _this.songPaginationInfoAll = responseData.data;
         _this.songListData = responseData.data.data;
         if(responseData.data.status == 1){
@@ -400,7 +407,13 @@ export default {
   padding: 0 10px 0 7px;
   border-bottom: 2px solid #C10D0C;
   margin:0 0 10px 10px;
+  position: relative;
 }
+  .song-sheet-header .search-input {
+    position: absolute;
+    top: 0;
+    right: 14px;
+  }
 .song-sheet-header .song-sheet-header-icon {
   display: inline-block;
   height: 15px;

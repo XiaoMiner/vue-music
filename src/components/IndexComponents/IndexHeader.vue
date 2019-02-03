@@ -17,6 +17,9 @@
           </ul>
 
         </div>
+        <div class="quit-login" @click="quitLogin">
+          退出
+        </div>
       </div>
 
     </div>
@@ -71,6 +74,15 @@ export default {
     /*********************************************/
   },
   methods: {
+    //退出登录
+    quitLogin(){
+      this.$router.push({
+        path: '/login',
+        name:'MyLogin'
+      });
+      // 退出登录之后, 是否登录的状态要改变。
+      sessionStorage.setItem('isLogin', '0');
+    },
     backIndex(){
       this.$router.push({
         path: '/myMusicIndex',
@@ -182,6 +194,7 @@ export default {
   }
 
   #header-top {
+    position: relative;
     height: 70px;
     background: #242424;
   }
@@ -269,6 +282,18 @@ export default {
     right: 7px;
   }
 
+
+  /*退出登录*/
+  #header-top .quit-login {
+    position: absolute;
+    top: 24px;
+    right: 120px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #header-top .quit-login:hover {
+    text-decoration: underline;
+  }
   /*搜索框处理部分*/
   #header-top-wrap .search {
     width: 158px;

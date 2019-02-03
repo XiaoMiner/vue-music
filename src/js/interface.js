@@ -1,6 +1,8 @@
 // 音乐文件所在的服务器地址
 const musicFileServerUrl = 'http://127.0.0.1:90';
 
+// 登录验证
+const xMusicLoginValid = '/login'
 // 查询音乐库中所有的歌手。
 const xMusicQueryAllSingers = '/AnnMusic/singer/all';
 
@@ -23,5 +25,5 @@ const xMusicDeleteUserHaveSong = '/AnnMusic/userHaveSong/delete';
 export default {
   musicFileServerUrl,
   xMusicQueryAllSingers,xMusicQueryAllSongs,xMusicQueryHaveSongsToSinger,xMusicQueryUserHaveSongs,xMusicDeleteUserHaveSong,
-  xMusicAddUserHaveSongs
+  xMusicAddUserHaveSongs,xMusicLoginValid
 }

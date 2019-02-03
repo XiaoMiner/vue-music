@@ -30,11 +30,11 @@ export default {
     return {
       userName: '',
       userPassword: '',
-      userNameInfo: this.$md5('admin'),
-      userPasswordInfo: this.$md5('123456'),
-      isShow: false,
-      isHide: true,
-      detectionInfo:'',
+     /* userNameInfo: this.$md5('admin'),
+      userPasswordInfo: this.$md5('123456'),*/
+      isShow: false, // 验证信息样式显示
+      isHide: true, // 验证信息样式隐藏
+      detectionInfo:'', // 验证信息
       isDown: false,//该状态表示是否按下鼠标
       mousePositionBoxX: 0,
       mousePositionBoxY: 0,
@@ -42,7 +42,7 @@ export default {
     }
   },
   mounted(){
-    console.dir(this.$md5)
+    // console.dir(this.$md5)
   },
   methods: {
     submit(){
@@ -62,12 +62,26 @@ export default {
         this.detectionInfo = '用户名称不能为空!'
         return ;
       }
-      // 帐号 密码 都不为空。
-      this.isShow = false;
-      this.isHide = true;
-      if(this.$md5(this.userName) == this.userNameInfo && this.$md5(this.userPassword) == this.userPasswordInfo){
-        window.location = window.location.origin+'/#/myMusicIndex';
-      }
+      var _this = this;
+      _this.$axios.get(_this.$interface.xMusicLoginValid+'/?userName='+_this.userName+'&userPassword='+_this.userPassword)
+        .then(function(responseData){
+          if(responseData.data.status == 1){
+            // 帐号 密码 都不为空。
+            _this.isShow = false;
+            _this.isHide = true;
+            _this.detectionInfo = responseData.data.message;
+            window.location = window.location.origin+'/#/myMusicIndex'; // 登录成功之后跳转到首页
+            sessionStorage.setItem("isLogin", '1')
+          }else {
+            _this.isShow = true;
+            _this.isHide = false;
+            _this.detectionInfo = '帐号和密码不匹配!';
+          }
+        })
+        .catch(function(err){
+          console.log(err);
+        })
+
     },
   },
   watch:{
